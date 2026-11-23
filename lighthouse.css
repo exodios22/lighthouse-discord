@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.4.0
+ * @version 5.4.1
  */
 
 /*
@@ -1165,6 +1165,19 @@ div:has(> [id='sticker-picker-tab-panel']) {
     box-shadow: 0 0 0 2px var(--lh-2), 0 0 26px -6px var(--lh-2) !important;
 }
 /* call and stage tiles (2026 layout): rounded, amber ring on whoever is speaking */
+/* Discord draws the speaking outline with its green status colours; inside tiles, make those amber */
+[data-call-tile],
+[class*='tileSizer'] {
+    --status-positive: var(--lh-2);
+    --status-speaking: var(--lh-2);
+    --status-positive-background: var(--lh-2);
+    --green-360: var(--lh-2);
+    --green-330: var(--lh-2);
+    --green-400: var(--lh-2);
+    --green-2: var(--lh-2);
+    --green-3: var(--lh-2);
+    --online: var(--lh-2);
+}
 [data-call-tile],
 [data-call-tile] [class*='tileChild'],
 [class*='tileSizer'] > [class*='wrapper_'] {
