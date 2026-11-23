@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.4.0
+ * @version 3.5.0
  */
 
 const COLOURWAYS = {
@@ -79,6 +79,8 @@ const DEFAULTS = {
     iconSet: true,
     bannerGlow: true,
     calmRoles: true,
+    roundWindow: true,
+    windowRadius: 12,
     healthCheck: true,
     whatsNew: true,
     notes: true,
@@ -274,6 +276,9 @@ module.exports = class LighthouseSettings {
         clearInterval(this.timeTimer);
         safe(() => this.unpatchMenu && this.unpatchMenu());
         document.body.classList.remove("lh-focus");
+        document.documentElement.classList.remove("lh-round", "lh-maximised");
+        if (this.onResize) { window.removeEventListener("resize", this.onResize); this.onResize = null; }
+        document.documentElement.style.removeProperty("--lh-window-radius");
         this.closePalette();
         document.querySelectorAll(".lh-dash-card, .lh-unread-pill, .lh-glow-ring, .lh-titlebar-search, .lh-colour-dot, .lh-swatch-pop, .lh-now-playing, .lh-friends-banner, .lh-cheatsheet, .lh-notes-btn, .lh-notes, .lh-news").forEach(n => n.remove());
         clearTimeout(this.updateTimer);
@@ -399,6 +404,15 @@ module.exports = class LighthouseSettings {
     apply() {
         this.api.DOM.removeStyle(STYLE_ID);
         this.api.DOM.addStyle(STYLE_ID, this.buildCss());
+        const html = document.documentElement;
+        html.classList.toggle("lh-round", !!this.settings.roundWindow);
+        html.style.setProperty("--lh-window-radius", `${this.settings.windowRadius}px`);
+        if (!this.onResize) {
+            this.onResize = () => document.documentElement.classList.toggle("lh-maximised",
+                !!window.screen && window.outerWidth >= window.screen.availWidth - 2 && window.outerHeight >= window.screen.availHeight - 2);
+            window.addEventListener("resize", this.onResize);
+        }
+        this.onResize();
     }
 
     /* ================= your own messages ================= */
@@ -1466,6 +1480,8 @@ module.exports = class LighthouseSettings {
                     {type: "switch", id: "colourDot", name: "Colourway dot", note: "A small dot in the title bar that opens a quick colourway picker.", value: s.colourDot},
                     {type: "switch", id: "nowPlaying", name: "Now playing", note: "Shows your current Spotify song as a small pill in the title bar while it plays.", value: s.nowPlaying},
                     {type: "switch", id: "spotifyControls", name: "Spotify buttons", note: "Previous, play/pause and next on the now-playing pill. Spotify only allows this with Premium.", value: s.spotifyControls},
+                    {type: "switch", id: "roundWindow", name: "Rounded window corners", note: "Rounds the corners of the whole Discord window. For see-through corners, also turn on BetterDiscord's window transparency setting (Settings → BetterDiscord → Settings → Window) and restart Discord. Corners stay square while the window is maximised.", value: s.roundWindow},
+                    {type: "slider", id: "windowRadius", name: "Window corner size", value: s.windowRadius, min: 4, max: 24, step: 1, units: "px", markers: [4, 8, 12, 16, 20, 24]},
                     {type: "dropdown", id: "winButtons", name: "Window buttons", value: s.winButtons, options: [
                         {label: "Minimal (Windows-style icons, coral close)", value: "minimal"},
                         {label: "Coloured dots", value: "dots"}]}
@@ -1584,6 +1600,12 @@ module.exports = class LighthouseSettings {
 
 /* styles for everything this plugin adds; uses the theme's colours with safe fallbacks */
 const FEATURE_CSS = `
+/* rounded window corners */
+html.lh-round, html.lh-round body { background: transparent !important; }
+html.lh-round #app-mount { border-radius: var(--lh-window-radius, 12px); clip-path: inset(0 round var(--lh-window-radius, 12px)); overflow: hidden; background: var(--lh-base, var(--bg-4, #0a111d)) !important; }
+@media (display-mode: fullscreen) { html.lh-round #app-mount { border-radius: 0; clip-path: none; } }
+html.lh-round.lh-maximised #app-mount { border-radius: 0; clip-path: none; }
+
 .lh-ico { display: inline-flex; flex: none; }
 .lh-kbd {
     font: 600 11px/1 var(--code-font, ui-monospace), ui-monospace, monospace; padding: 3px 6px; border-radius: 6px;
