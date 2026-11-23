@@ -2,10 +2,11 @@
   "entries": [
     {
       "id": "2026-11-23-c",
-      "version": "3.3.0",
+      "version": "3.3.1",
       "date": "23 Nov 2026",
       "title": "Icons, notes, bookmarks and more",
       "items": [
+        "Fixed self-updates: they now save into your plugins folder.",
         "Matching line icons on the main buttons (header, user panel, message box, title bar).",
         "Channel notes: a notepad for each channel, opened from the channel header.",
         "Bookmarks: right-click a message → Save to Lighthouse bookmarks, then find it in Ctrl+K.",

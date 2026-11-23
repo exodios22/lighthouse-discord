@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.3.0
+ * @version 3.3.1
  */
 
 const COLOURWAYS = {
@@ -879,7 +879,10 @@ module.exports = class LighthouseSettings {
             }
             const install = () => {
                 const fs = require("fs");
-                fs.writeFileSync(__filename, text);
+                const path = require("path");
+                const addon = BdApi.Plugins.get("LighthouseSettings");
+                const file = path.join(BdApi.Plugins.folder, (addon && addon.filename) || "LighthouseSettings.plugin.js");
+                fs.writeFileSync(file, text);
                 BdApi.UI.showToast(`LighthouseSettings updated to v${remote}`, {type: "success"});
             };
             BdApi.UI.showConfirmationModal("Lighthouse update", `LighthouseSettings v${remote} is available (you have v${this.meta.version}). Install it now? It downloads from ${UPDATE_URL}.`, {
@@ -1755,6 +1758,10 @@ body.lh-focus .lh-unread-pill { display: none; }
     background: color-mix(in srgb, #ffab4c, transparent 85%); border: 1px solid color-mix(in srgb, #ffab4c, transparent 55%);
     color: var(--text-default, #fff); font-size: 14px;
 }
+.bd-setting-item:has(.lh-colourways, .lh-profiles, .lh-profile-empty),
+.bd-setting-item:has(.lh-colourways, .lh-profiles, .lh-profile-empty) .bd-setting-header { flex-wrap: wrap; }
+*:has(> .lh-colourways), *:has(> .lh-profiles), *:has(> .lh-profile-empty) { flex: 1 1 100% !important; width: 100% !important; max-width: none !important; margin-left: 0 !important; }
+.lh-colourways, .lh-profiles, .lh-profile-empty { width: 100%; box-sizing: border-box; }
 .lh-colourways { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-top: 8px; }
 .lh-colourway {
     display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: 14px; cursor: pointer;
