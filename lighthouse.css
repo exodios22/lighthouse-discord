@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.2.0
+ * @version 5.3.0
  */
 
 /*
@@ -569,6 +569,45 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
 }
 
 /* ============================================================
+   SERVER FOLDERS AS DROP-DOWN TRAYS (top strip only)
+   An open folder's servers drop into a tray under the strip instead
+   of stretching the strip sideways.
+   ============================================================ */
+@container body style(--lh-server-bar: top) {
+    .guilds_pog62O:has(.folderGroup_RTMSuZ [aria-expanded='true']),
+    .guilds_pog62O:has(.folderGroup_RTMSuZ [aria-expanded='true']) .scroller_5dqHTG,
+    .guilds_pog62O:has(.folderGroup_RTMSuZ [aria-expanded='true']) .tree_5dqHTG,
+    .guilds_pog62O:has(.folderGroup_RTMSuZ [aria-expanded='true']) .itemsContainer_5dqHTG,
+    .guilds_pog62O:has(.folderGroup_RTMSuZ [aria-expanded='true']) .stack_TWWX0S {
+        overflow: visible !important;
+    }
+    .folderGroup_RTMSuZ {
+        position: relative;
+        overflow: visible !important;
+    }
+    /* the strip is rotated: "left" in here is "below" on screen, "top" is screen-left */
+    .folderGroup_RTMSuZ:has([aria-expanded='true']) > [id^='folder-items-'],
+    .folderGroup_RTMSuZ:has([aria-expanded='true']) > ul[role='group'] {
+        position: absolute !important;
+        top: -6px !important;
+        right: calc(100% + 12px) !important;
+        left: auto !important;
+        z-index: 200;
+        height: auto !important;
+        padding: 10px 8px !important;
+        gap: 6px;
+        background: var(--lh-raised) !important;
+        border: 1px solid rgb(var(--lh-tint) / 0.16) !important;
+        border-radius: 16px !important;
+        box-shadow: -18px 0 50px -20px rgb(0 0 0 / 0.85);
+    }
+    /* the folder's own background stripe is no longer needed */
+    .folderGroup_RTMSuZ:has([aria-expanded='true']) > [class*='folderGroupBackground'] {
+        display: none !important;
+    }
+}
+
+/* ============================================================
    AUTO-COLLAPSING SIDEBARS
    Channel and member lists rest as slim rails and slide open over
    the chat when hovered, so chat keeps the full width.
@@ -912,6 +951,27 @@ body.lh-focus .page_pog62O {
     letter-spacing: 0.08em;
     color: var(--text-5) !important;
 }
+/* redesigned settings sidebar (2026): links inside the settings-sidebar list */
+[data-list-id='settings-sidebar'] [role='link'] {
+    border-radius: var(--lh-radius-sm) !important;
+    font-weight: 600;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+[data-list-id='settings-sidebar'] [role='link']:hover {
+    background-color: rgb(var(--lh-tint) / 0.08) !important;
+}
+[data-list-id='settings-sidebar'] [role='link'][aria-current='page'] {
+    background: var(--lh-2) !important;
+    color: var(--text-0) !important;
+}
+[data-list-id='settings-sidebar'] [role='link'][aria-current='page'] * {
+    color: var(--text-0) !important;
+}
+[data-list-id='settings-sidebar'] [class*='sectionLabel'] {
+    letter-spacing: 0.08em;
+    color: var(--text-5) !important;
+}
+
 /* inputs and selects become soft rounded fields */
 .contentRegion_jnk11m input[type='text'],
 .contentRegion_jnk11m input[type='search'],
