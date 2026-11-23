@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.2.1
+ * @version 3.2.2
  */
 
 const COLOURWAYS = {
@@ -637,7 +637,10 @@ module.exports = class LighthouseSettings {
     updateColourDot() {
         const existing = document.querySelector(".lh-colour-dot");
         if (!this.settings.colourDot) { if (existing) existing.remove(); this.closeSwatches(); return; }
-        const host = document.querySelector(".trailing_3zSH5d");
+        // Discord keeps more than one title bar; use the one in the main window that is actually showing
+        const bars = [...document.querySelectorAll(".trailing_3zSH5d")];
+        const visible = b => { const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(b).visibility !== "hidden"; };
+        const host = bars.find(b => b.closest(".base_pog62O") && visible(b)) || bars.find(visible);
         if (!host) return;
         if (existing && existing.parentElement === host) return;
         if (existing) existing.remove();
