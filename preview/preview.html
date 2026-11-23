@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lighthouse preview (mockup)</title>
+<style>
+  :root { --base:#0a111d; --panel:#0f1828; --raised:#152034; --tint:140 170 220; --a:#ffab4c; --b:#ffc75e; --on:#1d1206;
+          --t1:#f3f6fa; --t2:#e3e9f2; --t3:#c9d2df; --t4:#93a0b5; --t5:#8190a6; --teal:#6ccfb0; --coral:#e88a95; --peri:#8b9cf0; --gold:#f5c04a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#05080e; font-family: Inter, sans-serif; color: var(--t2); }
+  .win { width:1440px; height:900px; background:var(--base); display:flex; flex-direction:column; overflow:hidden; position:relative; }
+  .tb { height:40px; display:flex; align-items:center; padding:0 8px; gap:8px; }
+  .pill { display:flex; align-items:center; gap:2px; padding:3px; border-radius:999px; background:rgb(var(--tint)/.06); border:1px solid rgb(var(--tint)/.1); }
+  .pill i { width:26px; height:26px; border-radius:999px; display:flex; align-items:center; justify-content:center; color:var(--t4); }
+  .search { margin:0 auto; display:flex; align-items:center; gap:10px; width:380px; height:30px; padding:0 6px 0 10px; border-radius:999px; background:rgb(var(--tint)/.06); border:1px solid rgb(var(--tint)/.12); font: 700 13px 'Inter Display', Inter; color:var(--t2); }
+  .search span { flex:1; }
+  kbd { font: 600 11px/1 'DejaVu Sans Mono', monospace; padding:3px 6px; border-radius:6px; border:1px solid rgb(var(--tint)/.2); color:var(--t4); background:rgb(var(--tint)/.06); }
+  .np { display:flex; align-items:center; gap:8px; height:28px; padding:0 6px 0 10px; border-radius:999px; background:rgb(29 185 84/.14); border:1px solid rgb(29 185 84/.35); font:700 12px Inter; }
+  .eq { display:inline-flex; align-items:flex-end; gap:2px; height:12px; } .eq b { width:3px; background:#1db954; border-radius:2px; }
+  .tr { display:flex; align-items:center; gap:4px; color:var(--t4); }
+  .tr .c { width:30px; height:30px; border-radius:999px; display:flex; align-items:center; justify-content:center; }
+  .dot { width:14px; height:14px; border-radius:999px; background:linear-gradient(135deg,var(--a),var(--b)); box-shadow:0 0 0 2px rgb(var(--tint)/.2),0 0 10px -2px var(--a); }
+  .wb { display:flex; align-items:center; gap:2px; padding-left:8px; border-left:1px solid rgb(var(--tint)/.16); margin-left:4px; }
+  .wb i { width:38px; height:28px; display:flex; align-items:center; justify-content:center; color:var(--t4); }
+  .strip { margin:0 12px; height:72px; border-radius:18px; background:var(--panel); border:1px solid rgb(var(--tint)/.1); display:flex; align-items:center; gap:10px; padding:0 14px; }
+  .srv { width:48px; height:48px; border-radius:16px; display:flex; align-items:center; justify-content:center; font:800 15px 'Inter Display'; color:#0a111d; position:relative; }
+  .srv.sel::after { content:''; position:absolute; bottom:-10px; left:12px; right:12px; height:4px; border-radius:4px; background:var(--a); }
+  .srv.un::after { content:''; position:absolute; bottom:-10px; left:20px; width:8px; height:4px; border-radius:4px; background:var(--a); }
+  .sep { width:1px; height:28px; background:rgb(var(--tint)/.14); }
+  .main { flex:1; display:flex; gap:12px; padding:12px; min-height:0; }
+  .card { background:var(--panel); border:1px solid rgb(var(--tint)/.1); border-radius:18px; box-shadow:0 1px 0 0 rgb(255 255 255/.035) inset, 0 18px 40px -24px rgb(0 0 0/.8); }
+  .side { width:280px; display:flex; flex-direction:column; gap:12px; }
+  .chlist { flex:1; padding:0 10px 10px; display:flex; flex-direction:column; position:relative; overflow:hidden; }
+  .chlist::before { content:''; position:absolute; inset:0 0 auto 0; height:220px; background:radial-gradient(60% 80% at 30% 0%, #7a5cff 0, transparent 70%), radial-gradient(60% 80% at 80% 10%, #ff8a3d 0, transparent 70%); filter:blur(30px); opacity:.35; }
+  .chlist > * { position:relative; }
+  .sname { font:800 18px 'Inter Display'; color:var(--t1); padding:16px 8px 12px; letter-spacing:-.01em; }
+  .cat { font:700 11px Inter; letter-spacing:.08em; text-transform:uppercase; color:var(--t5); padding:12px 8px 6px; }
+  .ch { display:flex; align-items:center; gap:10px; height:36px; padding:0 10px; border-radius:10px; color:var(--t4); font:500 15px Inter; }
+  .ch.sel { background:linear-gradient(135deg,var(--a),var(--b)); color:var(--on); font-weight:700; box-shadow:0 6px 20px -10px var(--a); }
+  .ch.un { color:var(--t1); font-weight:700; } .ch .n { margin-left:auto; font:800 11px Inter; background:var(--a); color:var(--on); border-radius:8px; padding:1px 7px; }
+  .over { margin-top:auto; padding:12px 14px; border-radius:14px; background:rgb(var(--tint)/.05); border:1px solid rgb(var(--tint)/.1); }
+  .over h4 { margin:0 0 10px; font:800 13px 'Inter Display'; color:var(--t1); }
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; } .stats small { display:block; font-size:11px; color:var(--t5); } .stats b { font:800 16px 'Inter Display'; color:var(--t1); } .stats div:last-child b { color:var(--a); }
+  .user { height:58px; display:flex; align-items:center; gap:10px; padding:0 12px; }
+  .av { width:36px; height:36px; border-radius:26%; flex:none; }
+  .chat { flex:1; display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .hdr { height:68px; display:flex; align-items:center; gap:12px; padding:0 18px; }
+  .hdr h1 { margin:0; font:800 22px 'Inter Display'; color:var(--t1); letter-spacing:-.015em; flex:1; }
+  .rb { width:36px; height:36px; border-radius:999px; display:flex; align-items:center; justify-content:center; background:rgb(var(--tint)/.07); border:1px solid rgb(var(--tint)/.1); color:var(--t4); position:relative; }
+  .rb .d { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:999px; background:var(--a); }
+  .unread { height:32px; padding:0 12px; border-radius:999px; background:var(--a); color:var(--on); font:700 13px Inter; display:flex; align-items:center; gap:6px; }
+  .msgs { flex:1; padding:18px 22px; display:flex; flex-direction:column; justify-content:flex-end; gap:16px; overflow:hidden; }
+  .m { display:flex; gap:14px; } .m .av { width:40px; height:40px; }
+  .who { display:flex; gap:8px; align-items:baseline; font:700 15px Inter; } .who small { font-weight:500; font-size:12px; color:var(--t5); }
+  .bub { display:inline-block; margin-top:4px; padding:9px 15px; border-radius:6px 18px 18px 18px; background:rgb(var(--tint)/.07); border:1px solid rgb(var(--tint)/.1); color:var(--t3); font:500 15px/1.55 Inter; max-width:640px; }
+  .bub.me { background:rgb(255 171 76/.12); border-color:rgb(255 171 76/.45); }
+  .bub + .bub { display:block; width:fit-content; }
+  pre { margin:6px 0 0; width:560px; border-radius:14px; overflow:hidden; border:1px solid rgb(var(--tint)/.12); font:13px/1.6 'DejaVu Sans Mono', monospace; }
+  pre .bar { display:flex; align-items:center; gap:6px; padding:7px 14px; background:rgb(var(--tint)/.08); color:var(--t4); font:600 11px 'DejaVu Sans Mono'; letter-spacing:.06em; }
+  pre .bar i { width:8px; height:8px; border-radius:999px; } pre code { display:block; padding:12px 14px; background:rgb(0 0 0/.18); color:var(--t3); }
+  .kw{color:var(--coral)} .st{color:var(--teal)} .nu{color:var(--gold)} .fn{color:var(--peri)} .cm{color:var(--t5);font-style:italic}
+  .reacts { display:flex; gap:6px; margin-top:6px; } .reacts span { padding:3px 10px; border-radius:999px; background:rgb(var(--tint)/.06); border:1px solid rgb(var(--tint)/.12); font:700 12px Inter; color:var(--t3); }
+  .reacts span.on { background:rgb(255 171 76/.16); border-color:rgb(255 171 76/.5); color:#ffd9a8; }
+  .comp { height:56px; margin:0 0 0; display:flex; align-items:center; gap:12px; padding:0 16px; border-radius:999px; background:var(--raised); color:var(--t5); font:500 15px Inter;
+          border:1px solid transparent; background: linear-gradient(var(--raised),var(--raised)) padding-box, conic-gradient(from 40deg, var(--a), var(--b), #ffd9a8, var(--a)) border-box; box-shadow:0 0 26px -8px rgb(255 171 76/.6); }
+  .comp span { flex:1; }
+  .mem { width:260px; padding:14px 10px; display:flex; flex-direction:column; gap:2px; }
+  .mem h5 { margin:10px 8px 6px; font:700 12px Inter; color:var(--t5); letter-spacing:.02em; }
+  .mm { display:flex; align-items:center; gap:10px; height:44px; padding:0 8px; border-radius:12px; } .mm .av { width:32px; height:32px; position:relative; }
+  .mm .av::after { content:''; position:absolute; right:-2px; bottom:-2px; width:10px; height:10px; border-radius:999px; border:2px solid var(--panel); background:var(--st,var(--teal)); }
+  .mm b { display:block; font:600 14px Inter; } .mm small { font-size:12px; color:var(--t5); }
+  svg { display:block; }
+  /* overlays */
+  .scrim { position:absolute; inset:0; background:rgb(0 0 0/.45); display:none; justify-content:center; align-items:flex-start; padding-top:130px; }
+  body.palette .scrim { display:flex; }
+  .pal { width:640px; border-radius:20px; background:var(--raised); border:1px solid rgb(var(--tint)/.16); box-shadow:0 40px 100px -20px rgb(0 0 0/.8); overflow:hidden; }
+  .pal .s { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid rgb(var(--tint)/.1); font:500 16px Inter; color:var(--t1); } .pal .s span { flex:1; }
+  .pal .g { padding:10px 16px 4px; font:700 11px Inter; letter-spacing:.08em; text-transform:uppercase; color:var(--t5); }
+  .pal .it { display:flex; align-items:center; gap:10px; margin:0 6px; padding:9px 10px; border-radius:10px; font:600 14px Inter; color:var(--t3); }
+  .pal .it.a { background:var(--a); color:var(--on); } .pal .it small { margin-left:auto; font-weight:500; opacity:.75; }
+  .pal .f { display:flex; justify-content:space-between; padding:9px 14px; margin-top:6px; border-top:1px solid rgb(var(--tint)/.1); font:500 12px Inter; color:var(--t5); }
+  .notes { position:absolute; top:130px; right:290px; width:320px; height:420px; border-radius:20px; background:var(--raised); border:1px solid rgb(var(--tint)/.16); box-shadow:0 30px 80px -20px rgb(0 0 0/.85); padding:16px; display:none; flex-direction:column; gap:10px; }
+  body.palette .notes { display:none; } body.notesopen .notes { display:flex; }
+  .notes .k { font:800 11px Inter; letter-spacing:.08em; text-transform:uppercase; color:var(--a); } .notes .t { font:800 17px 'Inter Display'; color:var(--t1); }
+  .notes .ta { flex:1; border-radius:14px; background:rgb(0 0 0/.2); border:1px solid rgb(255 171 76/.5); padding:12px; font:500 14px/1.6 Inter; color:var(--t2); }
+  .tag { position:absolute; right:30px; bottom:22px; font:600 11px Inter; color:var(--t5); }
+</style>
+</head>
+<body>
+<div class="win">
+  <div class="tb">
+    <div class="pill"><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></i><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></i></div>
+    <div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#93a0b5" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Nightshift Modding</span><kbd>Ctrl K</kbd></div>
+    <div class="np"><span class="eq"><b style="height:60%"></b><b style="height:100%"></b><b style="height:40%"></b></span>Neon Harbour — The Lanterns
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M19 5 9 12l10 7z"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 5v14M16 5v14"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 5v14M5 5l10 7-10 7z"/></svg></div>
+    <div class="tr"><div class="c"><span class="dot"></span></div>
+      <div class="c"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h5l1.5 3h5L16 13h5"/><path d="M5.5 5h13L21 13v6H3v-6z"/></svg></div>
+      <div class="c"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.6v.4M12 17h.01"/></svg></div>
+      <div class="wb"><i><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path d="M5 12h14"/></svg></i><i><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="5" width="14" height="14"/></svg></i><i><svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6 6 18"/></svg></i></div></div>
+  </div>
+  <div class="strip">
+    <div class="srv" style="background:linear-gradient(135deg,#ff8a3d,#ff4d6d);color:#fff">LH</div><div class="sep"></div>
+    <div class="srv sel" style="background:#2a1c14;color:#ffc79e">NM</div>
+    <div class="srv un" style="background:#14262e;color:#9eddfd">PX</div>
+    <div class="srv" style="background:#2a1a24;color:#f7b8d3">LF</div>
+    <div class="srv un" style="background:#2a2214;color:#fde08a">RS</div>
+    <div class="srv" style="background:#152820;color:#9be8c4">TT</div>
+    <div class="srv" style="background:#1c1f2a;color:#c3c7d9">ID</div>
+  </div>
+  <div class="main">
+    <div class="side">
+      <div class="card chlist">
+        <div class="sname">Nightshift Modding</div>
+        <div class="cat">Information</div>
+        <div class="ch un"># announcements<span class="n">2</span></div>
+        <div class="ch"># rules</div>
+        <div class="cat">Projects</div>
+        <div class="ch"># general</div>
+        <div class="ch sel"># shader-work</div>
+        <div class="ch un"># showcase</div>
+        <div class="ch"># tools</div>
+        <div class="cat">Voice</div>
+        <div class="ch">🔈 Lounge</div>
+        <div class="over"><h4>Nightshift Modding</h4><div class="stats"><div><small>Members</small><b>18,402</b></div><div><small>Online</small><b>6,113</b></div><div><small>Unread</small><b>2 · @3</b></div></div></div>
+      </div>
+      <div class="card user"><div class="av" style="background:linear-gradient(135deg,#8b9cf0,#6ccfb0)"></div><div style="flex:1"><b style="font:700 14px Inter;color:var(--t1)">lantern.dev</b><br><small style="color:var(--t5)">Online</small></div></div>
+    </div>
+    <div class="chat">
+      <div class="card hdr"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93a0b5" stroke-width="2" stroke-linecap="round"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg><h1>shader-work</h1>
+        <div class="unread"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>2 unread · @3</div>
+        <div class="rb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 3.5H7A3.5 3.5 0 0 0 3.5 7v10A3.5 3.5 0 0 0 7 20.5h10a3.5 3.5 0 0 0 3.5-3.5V9.5z"/><path d="M14.5 3.5v6h6M8 13h8M8 16.5h5"/></svg><span class="d"></span></div>
+        <div class="rb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h11M4 18h7"/><circle cx="19" cy="18" r="2"/></svg></div>
+        <div class="rb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 16v6"/><path d="M8.5 3h7l-1 6.5 3.5 4H6l3.5-4z"/></svg></div>
+        <div class="rb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-3.5-5.8"/></svg></div>
+      </div>
+      <div class="card msgs" style="padding-bottom:12px">
+        <div class="m"><div class="av" style="background:#f2a0c4"></div><div><div class="who" style="color:#f0b4cd">Mira <small>21:42</small></div>
+          <div class="bub">Pushed the new bloom pass — it's way cheaper now. Here's the core of it:</div>
+          <pre><div class="bar"><i style="background:var(--coral)"></i><i style="background:var(--gold)"></i><i style="background:var(--teal)"></i>&nbsp;&nbsp;HLSL</div><code><span class="kw">float3</span> <span class="fn">Bloom</span>(<span class="kw">float2</span> uv) {
+    <span class="cm">// 13-tap downsample, then upsample</span>
+    <span class="kw">float3</span> c = <span class="fn">Sample</span>(uv) * <span class="nu">0.125</span>;
+    <span class="kw">return</span> c + <span class="fn">Tent</span>(uv, <span class="nu">1.5</span>);
+}</code></pre>
+          <div class="reacts"><span class="on">🔥 12</span><span>👀 4</span></div></div></div>
+        <div class="m"><div class="av" style="background:linear-gradient(135deg,#8b9cf0,#6ccfb0)"></div><div><div class="who" style="color:var(--t1)">lantern.dev <small>21:44</small></div>
+          <div class="bub me">That's a huge win. Merging it into tonight's build.</div><div class="bub me">Anyone free to test on a low-end GPU?</div></div></div>
+        <div class="m"><div class="av" style="background:#fcd34d"></div><div><div class="who" style="color:#f5d27a">Theo <small>21:45</small></div><div class="bub">On it — running the 1060 benchmark now.</div></div></div>
+      </div>
+      <div class="comp"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93a0b5" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>Message #shader-work</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93a0b5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3.5"/><path d="M10 10H8.5v4H10v-1.8M13 10v4M16 14v-4h2M16 12h1.5"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93a0b5" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg></div>
+    </div>
+    <div class="card mem">
+      <h5>Leads — 2</h5>
+      <div class="mm"><div class="av" style="background:#f2a0c4"></div><div><b style="color:#f0b4cd">Mira</b><small>Editing bloom.hlsl</small></div></div>
+      <div class="mm"><div class="av" style="background:#a78bfa;--st:var(--gold)"></div><div><b style="color:#c3b5f5">Kade</b><small>Idle</small></div></div>
+      <h5>Online — 4</h5>
+      <div class="mm"><div class="av" style="background:#fcd34d"></div><div><b>Theo</b><small>Benchmarking</small></div></div>
+      <div class="mm"><div class="av" style="background:#7dd3fc"></div><div><b>Juno</b><small>In Lounge</small></div></div>
+      <div class="mm"><div class="av" style="background:#6ee7b7;--st:var(--coral)"></div><div><b>Ines</b><small>Do not disturb</small></div></div>
+      <div class="mm"><div class="av" style="background:linear-gradient(135deg,#8b9cf0,#6ccfb0)"></div><div><b>lantern.dev</b><small>Online</small></div></div>
+    </div>
+  </div>
+  <div class="notes"><div class="k">Notes</div><div class="t">shader-work</div><div class="ta">Bloom pass: test on 1060 before Friday.<br>Mira's tent filter radius = 1.5 looks best.<br>Ask Theo for the benchmark CSV.</div><div style="font:500 12px Inter;color:var(--t5)">Saved</div></div>
+  <div class="scrim"><div class="pal">
+    <div class="s"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#93a0b5" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>sha</span><kbd>Esc</kbd></div>
+    <div class="g">Channels</div><div class="it a"># shader-work</div><div class="it"># showcase</div>
+    <div class="g">Bookmarks</div><div class="it">Mira: Pushed the new bloom pass — it's way cheaper now…<small>23/11</small></div>
+    <div class="g">Lighthouse</div><div class="it">Enter focus mode<small>Ctrl Shift F</small></div><div class="it">Switch to Aurora</div>
+    <div class="f"><span>6 results</span><span>↑↓ move &nbsp; Enter open</span></div></div></div>
+  <div class="tag">Mockup with made-up content</div>
+</div>
+</body>
+</html>

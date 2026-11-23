@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.4.1
+ * @version 5.5.0
  */
 
 /*
@@ -30,6 +30,9 @@ body {
     --lh-code: on;                /* on | off — editor-style code blocks */
     --lh-a11y: off;               /* on | off — strong focus rings, bigger targets, no motion */
     --lh-glow: off;               /* on | off — cards glow under the mouse (needs the plugin) */
+    --lh-icons: on;               /* on | off — matching line icons on the main buttons */
+    --lh-banner-glow: on;         /* on | off — blurred server banner behind the channel list (needs the plugin) */
+    --lh-calm-roles: on;          /* on | off — soften neon role colours */
     --lh-winbuttons: minimal;     /* minimal | dots — window buttons in the title bar (dots also needs --custom-window-controls: on) */
 
     /* fonts */
@@ -173,6 +176,9 @@ body,
 @property --lh-glow { syntax: 'off | on'; inherits: false; initial-value: off; }
 @property --lh-mx { syntax: '<length>'; inherits: true; initial-value: -999px; }
 @property --lh-my { syntax: '<length>'; inherits: true; initial-value: -999px; }
+@property --lh-icons { syntax: 'off | on'; inherits: false; initial-value: on; }
+@property --lh-banner-glow { syntax: 'off | on'; inherits: false; initial-value: on; }
+@property --lh-calm-roles { syntax: 'off | on'; inherits: false; initial-value: on; }
 @property --lh-winbuttons { syntax: 'minimal | dots'; inherits: false; initial-value: minimal; }
 @property --lh-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 
@@ -1295,6 +1301,190 @@ div:has(> [id='sticker-picker-tab-panel']) {
     border-radius: 14px !important;
     border: 1px solid rgb(var(--lh-tint) / 0.08);
     background: rgb(var(--lh-tint) / 0.03) !important;
+}
+
+/* ============================================================
+   MATCHING ICON SET
+   Discord's mixed icons on the main buttons are swapped for one
+   consistent line style (matched by the buttons' labels).
+   ============================================================ */
+:root {
+    --lh-i-inbox: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M3 13h5l1.5 3h5L16 13h5%22/%3E%3Cpath d=%22M5.5 5h13L21 13v6H3v-6z%22/%3E%3C/svg%3E");
+    --lh-i-help: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%229%22/%3E%3Cpath d=%22M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.6v.4%22/%3E%3Cpath d=%22M12 17h.01%22/%3E%3C/svg%3E");
+    --lh-i-threads: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M4 6h16M4 12h11M4 18h7%22/%3E%3Ccircle cx=%2219%22 cy=%2218%22 r=%222%22/%3E%3C/svg%3E");
+    --lh-i-bell: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9%22/%3E%3Cpath d=%22M10 20.5a2.2 2.2 0 0 0 4 0%22/%3E%3C/svg%3E");
+    --lh-i-pin: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M12 16v6%22/%3E%3Cpath d=%22M8.5 3h7l-1 6.5 3.5 4H6l3.5-4z%22/%3E%3C/svg%3E");
+    --lh-i-users: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%229%22 cy=%228%22 r=%223.5%22/%3E%3Cpath d=%22M2.5 20a6.5 6.5 0 0 1 13 0%22/%3E%3Cpath d=%22M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-3.5-5.8%22/%3E%3C/svg%3E");
+    --lh-i-mic: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%229%22 y=%223%22 width=%226%22 height=%2211%22 rx=%223%22/%3E%3Cpath d=%22M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21%22/%3E%3C/svg%3E");
+    --lh-i-micoff: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%229%22 y=%223%22 width=%226%22 height=%2211%22 rx=%223%22/%3E%3Cpath d=%22M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M3 3l18 18%22/%3E%3C/svg%3E");
+    --lh-i-headphones: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M3.5 18v-5.5a8.5 8.5 0 0 1 17 0V18%22/%3E%3Cpath d=%22M20.5 18.5a2 2 0 0 1-2 2h-1.5v-6h3.5zM3.5 18.5a2 2 0 0 0 2 2H7v-6H3.5z%22/%3E%3C/svg%3E");
+    --lh-i-headphonesoff: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M3.5 18v-5.5a8.5 8.5 0 0 1 17 0V18%22/%3E%3Cpath d=%22M20.5 18.5a2 2 0 0 1-2 2h-1.5v-6h3.5zM3.5 18.5a2 2 0 0 0 2 2H7v-6H3.5zM3 3l18 18%22/%3E%3C/svg%3E");
+    --lh-i-gear: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%223%22/%3E%3Cpath d=%22M12 2.5v2.8M12 18.7v2.8M4.6 4.6l2 2M17.4 17.4l2 2M2.5 12h2.8M18.7 12h2.8M4.6 19.4l2-2M17.4 6.6l2-2%22/%3E%3C/svg%3E");
+    --lh-i-plus: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%229%22/%3E%3Cpath d=%22M12 8v8M8 12h8%22/%3E%3C/svg%3E");
+    --lh-i-gif: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223%22 y=%225%22 width=%2218%22 height=%2214%22 rx=%223.5%22/%3E%3Cpath d=%22M10 10H8.5v4H10v-1.8M13 10v4M16 14v-4h2M16 12h1.5%22/%3E%3C/svg%3E");
+    --lh-i-sticker: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M15 3.5H7A3.5 3.5 0 0 0 3.5 7v10A3.5 3.5 0 0 0 7 20.5h6.5l7-7V7A3.5 3.5 0 0 0 17 3.5z%22/%3E%3Cpath d=%22M13.5 20.5V16a2.5 2.5 0 0 1 2.5-2.5h4.5%22/%3E%3C/svg%3E");
+    --lh-i-gift: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223.5%22 y=%228%22 width=%2217%22 height=%224%22 rx=%221%22/%3E%3Cpath d=%22M12 8v12.5M19 12v8.5H5V12M8 8a2.5 2.5 0 0 1 0-5c3 0 4 5 4 5s1-5 4-5a2.5 2.5 0 0 1 0 5%22/%3E%3C/svg%3E");
+    --lh-i-apps: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Crect x=%223.5%22 y=%223.5%22 width=%227%22 height=%227%22 rx=%222%22/%3E%3Crect x=%2213.5%22 y=%223.5%22 width=%227%22 height=%227%22 rx=%222%22/%3E%3Crect x=%223.5%22 y=%2213.5%22 width=%227%22 height=%227%22 rx=%222%22/%3E%3Crect x=%2213.5%22 y=%2213.5%22 width=%227%22 height=%227%22 rx=%222%22/%3E%3C/svg%3E");
+}
+@container body style(--lh-icons: on) {
+    [aria-label='Inbox' i] svg {
+        -webkit-mask: var(--lh-i-inbox) center / 100% 100% no-repeat;
+        mask: var(--lh-i-inbox) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    [aria-label='Help' i] svg {
+        -webkit-mask: var(--lh-i-help) center / 100% 100% no-repeat;
+        mask: var(--lh-i-help) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .subtitleContainer_z_gUBg [aria-label='Threads' i] svg {
+        -webkit-mask: var(--lh-i-threads) center / 100% 100% no-repeat;
+        mask: var(--lh-i-threads) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .subtitleContainer_z_gUBg [aria-label*='Notification' i] svg {
+        -webkit-mask: var(--lh-i-bell) center / 100% 100% no-repeat;
+        mask: var(--lh-i-bell) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .subtitleContainer_z_gUBg [aria-label*='Pinned' i] svg {
+        -webkit-mask: var(--lh-i-pin) center / 100% 100% no-repeat;
+        mask: var(--lh-i-pin) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .subtitleContainer_z_gUBg [aria-label*='Member List' i] svg {
+        -webkit-mask: var(--lh-i-users) center / 100% 100% no-repeat;
+        mask: var(--lh-i-users) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .panels_pog62O [aria-label='Mute' i] svg {
+        -webkit-mask: var(--lh-i-mic) center / 100% 100% no-repeat;
+        mask: var(--lh-i-mic) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .panels_pog62O [aria-label='Unmute' i] svg {
+        -webkit-mask: var(--lh-i-micoff) center / 100% 100% no-repeat;
+        mask: var(--lh-i-micoff) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .panels_pog62O [aria-label='Deafen' i] svg {
+        -webkit-mask: var(--lh-i-headphones) center / 100% 100% no-repeat;
+        mask: var(--lh-i-headphones) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .panels_pog62O [aria-label='Undeafen' i] svg {
+        -webkit-mask: var(--lh-i-headphonesoff) center / 100% 100% no-repeat;
+        mask: var(--lh-i-headphonesoff) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .panels_pog62O [aria-label='User Settings' i] svg {
+        -webkit-mask: var(--lh-i-gear) center / 100% 100% no-repeat;
+        mask: var(--lh-i-gear) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .channelTextArea_z_gUBg [aria-label*='upload' i] svg {
+        -webkit-mask: var(--lh-i-plus) center / 100% 100% no-repeat;
+        mask: var(--lh-i-plus) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .channelTextArea_z_gUBg [aria-label*='GIF' i] svg {
+        -webkit-mask: var(--lh-i-gif) center / 100% 100% no-repeat;
+        mask: var(--lh-i-gif) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .channelTextArea_z_gUBg [aria-label*='sticker' i] svg {
+        -webkit-mask: var(--lh-i-sticker) center / 100% 100% no-repeat;
+        mask: var(--lh-i-sticker) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .channelTextArea_z_gUBg [aria-label*='gift' i] svg {
+        -webkit-mask: var(--lh-i-gift) center / 100% 100% no-repeat;
+        mask: var(--lh-i-gift) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    .channelTextArea_z_gUBg [aria-label='Apps' i] svg {
+        -webkit-mask: var(--lh-i-apps) center / 100% 100% no-repeat;
+        mask: var(--lh-i-apps) center / 100% 100% no-repeat;
+        background-color: currentColor;
+    }
+    [aria-label='Inbox' i] svg > *,
+    [aria-label='Help' i] svg > *,
+    .subtitleContainer_z_gUBg [aria-label='Threads' i] svg > *,
+    .subtitleContainer_z_gUBg [aria-label*='Notification' i] svg > *,
+    .subtitleContainer_z_gUBg [aria-label*='Pinned' i] svg > *,
+    .subtitleContainer_z_gUBg [aria-label*='Member List' i] svg > *,
+    .panels_pog62O [aria-label='Mute' i] svg > *,
+    .panels_pog62O [aria-label='Unmute' i] svg > *,
+    .panels_pog62O [aria-label='Deafen' i] svg > *,
+    .panels_pog62O [aria-label='Undeafen' i] svg > *,
+    .panels_pog62O [aria-label='User Settings' i] svg > *,
+    .channelTextArea_z_gUBg [aria-label*='upload' i] svg > *,
+    .channelTextArea_z_gUBg [aria-label*='GIF' i] svg > *,
+    .channelTextArea_z_gUBg [aria-label*='sticker' i] svg > *,
+    .channelTextArea_z_gUBg [aria-label*='gift' i] svg > *,
+    .channelTextArea_z_gUBg [aria-label='Apps' i] svg > * {
+        opacity: 0 !important;
+    }
+}
+
+/* ============================================================
+   SERVER BANNER HEADER
+   The plugin puts the server's banner (or icon) behind the top of
+   the channel list as a soft, blurred glow.
+   ============================================================ */
+@container body style(--lh-banner-glow: on) {
+    .sidebarList_pog62O[style*='--lh-banner'] {
+        isolation: isolate;
+    }
+    .sidebarList_pog62O[style*='--lh-banner']::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 230px;
+        z-index: -1;
+        pointer-events: none;
+        background: var(--lh-banner) center / cover no-repeat;
+        filter: blur(30px) saturate(1.35);
+        opacity: 0.42;
+        -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+        mask-image: linear-gradient(180deg, #000 0%, transparent 100%);
+        border-radius: inherit;
+    }
+}
+
+/* ============================================================
+   EMBEDS AS CARDS (link previews, bot messages)
+   ============================================================ */
+[class*='embedFull_'] {
+    border-radius: 14px !important;
+    background: rgb(var(--lh-tint) / 0.045) !important;
+    border-top: 1px solid rgb(var(--lh-tint) / 0.1) !important;
+    border-right: 1px solid rgb(var(--lh-tint) / 0.1) !important;
+    border-bottom: 1px solid rgb(var(--lh-tint) / 0.1) !important;
+    border-left-width: 4px !important;
+    box-shadow: 0 12px 28px -20px rgb(0 0 0 / 0.8);
+}
+[class*='embedFull_'] [class*='embedTitle_'] {
+    font-family: var(--lh-display-font);
+    font-weight: 700;
+}
+[class*='embedFull_'] [class*='embedImage_'] img,
+[class*='embedFull_'] [class*='embedThumbnail_'] img,
+[class*='embedFull_'] [class*='embedMedia_'] {
+    border-radius: 10px !important;
+}
+
+/* ============================================================
+   CALMER ROLE COLOURS
+   Softens neon role colours so names sit nicely on navy.
+   ============================================================ */
+@container body style(--lh-calm-roles: on) {
+    [class*='username_'][style*='color'],
+    [class*='roleColor'],
+    .members_86es0b [class*='name_'] [style*='color'],
+    .members_86es0b [class*='username_'] {
+        filter: saturate(0.7) brightness(1.04);
+    }
 }
 
 /* ============================================================

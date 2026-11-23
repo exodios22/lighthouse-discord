@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.2.2
+ * @version 3.3.0
  */
 
 const COLOURWAYS = {
@@ -75,6 +75,14 @@ const DEFAULTS = {
     cheatSheet: true,
     friendsBanner: true,
     autoUpdate: true,
+    iconSet: true,
+    bannerGlow: true,
+    calmRoles: true,
+    healthCheck: true,
+    whatsNew: true,
+    notes: true,
+    bookmarks: true,
+    spotifyControls: true,
     winButtons: "minimal",
     dashHeader: true,
     bubbles: true,
@@ -93,6 +101,8 @@ const SETTING_KEYS = Object.keys(DEFAULTS);
 
 // raw address of this plugin in the Lighthouse GitHub repo (empty = no update checks)
 const UPDATE_URL = "https://raw.githubusercontent.com/exodios22/lighthouse-discord/main/LighthouseSettings.plugin.js";
+
+const PAGES_URL = "https://exodios22.github.io/lighthouse-discord";
 
 const STYLE_ID = "lighthouse-settings-overrides";
 const FEATURE_STYLE_ID = "lighthouse-features";
@@ -211,6 +221,12 @@ const ICONS = {
     bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
     palette: '<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="15.5" cy="10" r="1.2"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+    note: '<path d="M14.5 3.5H7A3.5 3.5 0 0 0 3.5 7v10A3.5 3.5 0 0 0 7 20.5h10a3.5 3.5 0 0 0 3.5-3.5V9.5z"/><path d="M14.5 3.5v6h6M8 13h8M8 16.5h5"/>',
+    bookmark: '<path d="M6 3.5h12v17l-6-4-6 4z"/>',
+    prev: '<path d="M6 5v14M19 5 9 12l10 7z"/>',
+    next: '<path d="M18 5v14M5 5l10 7-10 7z"/>',
+    play: '<path d="M7 4.5v15l12-7.5z"/>',
+    pause: '<path d="M8 5v14M16 5v14"/>',
     bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'
 };
 
@@ -230,6 +246,8 @@ module.exports = class LighthouseSettings {
         if (saved.colourway === "lighthouse") saved.colourway = "simforge";
         this.settings = Object.assign({}, DEFAULTS, saved);
         this.profiles = this.api.Data.load("profiles") || {};
+        this.notesData = this.api.Data.load("notes") || {};
+        this.bookmarksData = this.api.Data.load("bookmarks") || [];
         this.channelAccents = this.api.Data.load("channelAccents") || {};
     }
 
@@ -243,6 +261,8 @@ module.exports = class LighthouseSettings {
         this.patchContextMenu();
         this.refreshFeatures();
         this.updateTimer = setTimeout(() => this.checkForUpdate(false), 15000);
+        this.healthTimer = setTimeout(() => this.runHealthCheck(false), 25000);
+        this.newsTimer = setTimeout(() => this.showWhatsNew(false), 6000);
     }
 
     stop() {
@@ -254,8 +274,15 @@ module.exports = class LighthouseSettings {
         safe(() => this.unpatchMenu && this.unpatchMenu());
         document.body.classList.remove("lh-focus");
         this.closePalette();
-        document.querySelectorAll(".lh-dash-card, .lh-unread-pill, .lh-glow-ring, .lh-titlebar-search, .lh-colour-dot, .lh-swatch-pop, .lh-now-playing, .lh-friends-banner, .lh-cheatsheet").forEach(n => n.remove());
+        document.querySelectorAll(".lh-dash-card, .lh-unread-pill, .lh-glow-ring, .lh-titlebar-search, .lh-colour-dot, .lh-swatch-pop, .lh-now-playing, .lh-friends-banner, .lh-cheatsheet, .lh-notes-btn, .lh-notes, .lh-news").forEach(n => n.remove());
         clearTimeout(this.updateTimer);
+        clearTimeout(this.healthTimer);
+        clearTimeout(this.newsTimer);
+        this.closeNotes();
+        this.closeNews();
+        document.querySelectorAll('.lh-notes-btn').forEach(n => n.remove());
+        safe(() => this.unpatchMsgMenu && this.unpatchMsgMenu());
+        const sl = document.querySelector('.sidebarList_pog62O'); if (sl) sl.style.removeProperty('--lh-banner');
         this.glowRing = null;
         this.lastGuild = this.lastChannel = undefined;
     }
@@ -295,6 +322,8 @@ module.exports = class LighthouseSettings {
         safe(() => this.updateColourDot());
         safe(() => this.updateNowPlaying());
         safe(() => this.updateFriendsBanner());
+        safe(() => this.updateBannerGlow());
+        safe(() => this.updateNotesButton());
         if (!this.ownApplied) safe(() => this.applyOwnMessages());
     }
 
@@ -345,6 +374,9 @@ module.exports = class LighthouseSettings {
             "--lh-a11y": onOff(s.a11y),
             "--lh-glow": onOff(s.glow && !s.a11y),
             "--lh-winbuttons": s.winButtons,
+            "--lh-icons": onOff(s.iconSet),
+            "--lh-banner-glow": onOff(s.bannerGlow),
+            "--lh-calm-roles": onOff(s.calmRoles),
             "--custom-window-controls": s.winButtons === "dots" ? "on" : "off",
             "--lh-motion": onOff(motion),
             "--animations": onOff(motion),
@@ -461,6 +493,21 @@ module.exports = class LighthouseSettings {
     }
 
     patchContextMenu() {
+        safe(() => {
+            this.unpatchMsgMenu = BdApi.ContextMenu.patch("message", (tree, props) => {
+                const msg = props && props.message, channel = props && props.channel;
+                if (!this.settings.bookmarks || !msg || !channel || !tree || !tree.props) return;
+                const saved = this.bookmarksData.some(b => b.id === msg.id);
+                const item = BdApi.ContextMenu.buildItem({
+                    label: saved ? "Remove from Lighthouse bookmarks" : "Save to Lighthouse bookmarks",
+                    id: "lighthouse-bookmark",
+                    action: () => saved ? this.removeBookmark(msg.id) : this.addBookmark(msg, channel)
+                });
+                const kids = tree.props.children;
+                if (Array.isArray(kids)) kids.push(item);
+                else tree.props.children = [kids, item];
+            });
+        });
         safe(() => {
             this.unpatchMenu = BdApi.ContextMenu.patch("channel-context", (tree, props) => {
                 const channel = props && props.channel;
@@ -695,20 +742,38 @@ module.exports = class LighthouseSettings {
 
     updateNowPlaying() {
         const existing = document.querySelector(".lh-now-playing");
-        const track = this.settings.nowPlaying ? this.currentTrack() : null;
+        let track = this.settings.nowPlaying ? this.currentTrack() : null;
         const ended = track && track.end && Date.now() > track.end + 5000;
-        if (!track || ended) { if (existing) existing.remove(); return; }
+        if (track && !ended) {
+            // Discord keeps reporting a song for a few seconds after pausing; only treat it as playing again after that
+            if (!this.paused || Date.now() - (this.pausedAt || 0) > 8000) this.paused = false;
+            this.lastTrack = track; this.lastTrackAt = Date.now();
+        }
+        // keep a paused song on screen for a while so it can be resumed from the pill
+        const showPaused = this.settings.spotifyControls && this.paused && this.lastTrack && Date.now() - this.lastTrackAt < 10 * 60 * 1000;
+        if ((!track || ended) && !showPaused) { if (existing) existing.remove(); return; }
+        if (!track || ended) track = this.lastTrack;
         const host = document.querySelector(".title_3zSH5d");
         if (!host) return;
         let pill = existing;
         if (!pill || pill.parentElement !== host) {
             if (pill) pill.remove();
-            pill = el("div", {class: "lh-now-playing", role: "status"},
+            pill = el("div", {class: "lh-now-playing", role: "group", "aria-label": "Now playing"},
                 el("span", {class: "lh-eq", "aria-hidden": "true"}, el("i"), el("i"), el("i")),
-                el("span", {class: "lh-np-text"}));
+                el("span", {class: "lh-np-text", role: "status"}));
+            if (this.settings.spotifyControls) {
+                const btn = (label, icon, action) => { const b = el("button", {class: "lh-np-btn", type: "button", "aria-label": label, title: label, onClick: e => { e.stopPropagation(); this.spotify(action); }}); b.append(svgIcon(icon)); return b; };
+                pill.append(el("span", {class: "lh-np-controls"}, btn("Previous", ICONS.prev, "previous"), btn("Pause", ICONS.pause, "pause"), btn("Next", ICONS.next, "next")));
+            }
             host.append(pill);
         }
         const text = track.artist ? `${track.title} — ${track.artist}` : track.title;
+        const pp = pill.querySelector(".lh-np-controls .lh-np-btn:nth-child(2)");
+        if (pp) {
+            const want = this.paused ? "Play" : "Pause";
+            if (pp.getAttribute("aria-label") !== want) { pp.setAttribute("aria-label", want); pp.title = want; pp.textContent = ""; pp.append(svgIcon(this.paused ? ICONS.play : ICONS.pause)); }
+        }
+        pill.classList.toggle("lh-np-paused", !!this.paused);
         const span = pill.querySelector(".lh-np-text");
         if (span.textContent !== text) { span.textContent = text; pill.title = `Now playing: ${text}`; pill.setAttribute("aria-label", `Now playing: ${text}`); }
     }
@@ -825,6 +890,239 @@ module.exports = class LighthouseSettings {
         }
     }
 
+    /* ================= Spotify controls ================= */
+    async spotify(action) {
+        const sd = safe(() => getStore("SpotifyStore").getActiveSocketAndDevice());
+        const token = sd && sd.socket && sd.socket.accessToken;
+        if (!token) { BdApi.UI.showToast("Spotify isn't connected to Discord, or nothing is playing on a device", {type: "error"}); return; }
+        if (action === "pause" && this.paused) action = "play";
+        const map = {previous: ["POST", "previous"], next: ["POST", "next"], pause: ["PUT", "pause"], play: ["PUT", "play"]};
+        const [method, path] = map[action];
+        try {
+            const res = await BdApi.Net.fetch(`https://api.spotify.com/v1/me/player/${path}`, {method, headers: {Authorization: `Bearer ${token}`}});
+            if (res.status === 403) throw new Error("Spotify only allows playback control with Premium");
+            if (!res.ok && res.status !== 204) throw new Error(`Spotify said ${res.status}`);
+            if (action === "pause") { this.paused = true; this.pausedAt = Date.now(); this.lastTrackAt = Date.now(); }
+            if (action === "play") { this.paused = false; this.pausedAt = 0; }
+            this.updateNowPlaying();
+        } catch (e) {
+            BdApi.UI.showToast(e.message, {type: "error"});
+        }
+    }
+
+    /* ================= server banner glow ================= */
+    updateBannerGlow() {
+        const list = document.querySelector(".sidebarList_pog62O");
+        if (!list) return;
+        if (!this.settings.bannerGlow) { list.style.removeProperty("--lh-banner"); return; }
+        const banner = list.querySelector("[class*='bannerImg'] img, [class*='bannerImage'] img, img[class*='bannerImg'], img[src*='/banners/']");
+        const icon = document.querySelector('[data-list-item-id^="guildsnav___"][aria-selected="true"] img');
+        const src = (banner && banner.src) || (icon && icon.src) || "";
+        const want = src ? `url("${src.replace(/"/g, "%22")}")` : "";
+        if (list.style.getPropertyValue("--lh-banner") !== want) {
+            if (want) list.style.setProperty("--lh-banner", want);
+            else list.style.removeProperty("--lh-banner");
+        }
+    }
+
+    /* ================= health check ================= */
+    runHealthCheck(manual) {
+        if (!manual && !this.settings.healthCheck) return;
+        // each pair: a loose match for the part of Discord, and the exact class Lighthouse styles
+        const parts = [
+            ["Server list", "guilds_", "guilds_pog62O"],
+            ["Channel list", "sidebarList_", "sidebarList_pog62O"],
+            ["Channels", "link_", "link_TNyK-N", '[data-list-item-id^="channels___"]'],
+            ["Chat", "chatContent_", "chatContent_z_gUBg"],
+            ["Messages", "message_", "message_SY_P2T", 'li[id^="chat-messages-"]'],
+            ["Channel header", "subtitleContainer_", "subtitleContainer_z_gUBg"],
+            ["Message box", "channelTextArea_", "channelTextArea_z_gUBg"],
+            ["Member list", "membersWrap_", "container_86es0b"],
+            ["Your user panel", "panels_", "panels_pog62O"],
+            ["Title bar", "trailing_", "trailing_3zSH5d"],
+            ["Window layout", "base_", "base_pog62O"],
+            ["Server name", "name_", "name_XH4OpX", "header[class*='header_']"]
+        ];
+        const broken = [];
+        for (const [name, prefix, exact, needs] of parts) {
+            if (needs && !document.querySelector(needs)) continue; // that part isn't on screen right now
+            const present = document.querySelector(`[class*="${prefix}"]`);
+            if (!present) continue;
+            if (!document.querySelector(`.${CSS.escape(exact)}`)) broken.push(name);
+        }
+        if (!broken.length) {
+            if (manual) BdApi.UI.showToast("Lighthouse health check: everything is being found", {type: "success"});
+            return;
+        }
+        const report = `Lighthouse health check: Discord renamed parts of its layout. Not matching: ${broken.join(", ")}. Plugin v${this.meta.version}.`;
+        const close = BdApi.UI.showNotice(`Lighthouse: Discord changed part of its layout, so some styling may not apply (${broken.join(", ")}). An update usually fixes this.`, {
+            type: "warning",
+            buttons: [
+                {label: "Check for updates", onClick: () => { this.checkForUpdate(true); safe(() => close()); }},
+                {label: "Copy report", onClick: () => { this.copyText(report); BdApi.UI.showToast("Report copied — paste it to whoever maintains Lighthouse", {type: "info"}); }}
+            ]
+        });
+    }
+
+    copyText(text) {
+        if (safe(() => { DiscordNative.clipboard.copy(text); return true; })) return;
+        safe(() => navigator.clipboard.writeText(text));
+    }
+
+    /* ================= what's new ================= */
+    async showWhatsNew(manual) {
+        if (!manual && !this.settings.whatsNew) return;
+        let entries;
+        try {
+            const res = await BdApi.Net.fetch(`${PAGES_URL}/changelog.json?t=${Math.floor(Date.now() / 60000)}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            entries = (await res.json()).entries || [];
+        } catch (e) {
+            if (manual) BdApi.UI.showToast(`Couldn't load what's new: ${e.message}`, {type: "error"});
+            return;
+        }
+        const seen = this.api.Data.load("seenNews") || [];
+        const fresh = manual ? entries.slice(0, 3) : entries.filter(e => !seen.includes(e.id));
+        if (!seen.length && !manual) {
+            // first run: only show the newest entry, remember the rest as seen
+            this.api.Data.save("seenNews", entries.map(e => e.id));
+            if (entries[0]) this.renderNews([entries[0]]);
+            return;
+        }
+        if (!fresh.length) { if (manual) BdApi.UI.showToast("Nothing new since last time", {type: "info"}); return; }
+        this.api.Data.save("seenNews", [...new Set([...seen, ...entries.map(e => e.id)])]);
+        this.renderNews(fresh);
+    }
+
+    renderNews(list) {
+        this.closeNews();
+        const body = el("div", {class: "lh-news-list"});
+        for (const e of list) {
+            const items = el("ul", {class: "lh-news-items"});
+            for (const it of (e.items || [])) items.append(el("li", null, String(it)));
+            body.append(el("section", {class: "lh-news-entry"},
+                el("div", {class: "lh-news-meta"}, el("span", {class: "lh-news-tag"}, e.version ? `v${e.version}` : "Update"), el("span", null, e.date || "")),
+                el("h3", {class: "lh-news-title"}, String(e.title || "")), items));
+        }
+        const close = el("button", {class: "lh-btn lh-btn-accent", type: "button", onClick: () => this.closeNews()}, "Nice");
+        const card = el("div", {class: "lh-cheat lh-news", role: "dialog", "aria-modal": "true", "aria-label": "What's new in Lighthouse"},
+            el("div", {class: "lh-cheat-head"}, el("h2", {class: "lh-cheat-title"}, "What's new in Lighthouse"), close), body);
+        this.newsEl = el("div", {class: "lh-palette-backdrop lh-cheatsheet", onMousedown: ev => { if (ev.target === this.newsEl) this.closeNews(); }}, card);
+        document.body.append(this.newsEl);
+        close.focus();
+    }
+
+    closeNews() {
+        if (this.newsEl) this.newsEl.remove();
+        this.newsEl = null;
+    }
+
+    /* ================= setup codes ================= */
+    copySetupCode() {
+        const snap = {};
+        for (const k of SETTING_KEYS) snap[k] = this.settings[k];
+        const code = "LH1:" + btoa(unescape(encodeURIComponent(JSON.stringify(snap))));
+        this.copyText(code);
+        BdApi.UI.showToast("Setup code copied — send it to a friend with Lighthouse", {type: "success"});
+        return code;
+    }
+
+    importSetupCode(code) {
+        try {
+            const raw = String(code || "").trim();
+            if (!raw.startsWith("LH1:")) throw new Error("That doesn't look like a Lighthouse setup code");
+            const data = JSON.parse(decodeURIComponent(escape(atob(raw.slice(4)))));
+            const clean = {};
+            for (const k of SETTING_KEYS) if (k in data && typeof data[k] === typeof DEFAULTS[k]) clean[k] = data[k];
+            if (!Object.keys(clean).length) throw new Error("The code had no settings in it");
+            this.settings = Object.assign({}, DEFAULTS, clean);
+            this.save();
+            this.apply();
+            this.refreshFeatures();
+            BdApi.UI.showToast("Setup applied", {type: "success"});
+            return true;
+        } catch (e) {
+            BdApi.UI.showToast(e.message.includes("Lighthouse") || e.message.includes("code") ? e.message : "That code couldn't be read", {type: "error"});
+            return false;
+        }
+    }
+
+    /* ================= channel notes ================= */
+    updateNotesButton() {
+        const existing = document.querySelector(".lh-notes-btn");
+        const host = document.querySelector(".subtitleContainer_z_gUBg .toolbar_ybUK7Z");
+        const ch = this.currentChannelId();
+        if (!this.settings.notes || !host || !ch) { if (existing) existing.remove(); return; }
+        let btn = existing;
+        if (!btn || btn.parentElement !== host) {
+            if (btn) btn.remove();
+            btn = el("button", {class: "lh-notes-btn clickable_ybUK7Z", type: "button", "aria-label": "Channel notes", title: "Channel notes", onClick: () => (this.notesEl ? this.closeNotes() : this.openNotes())});
+            btn.append(svgIcon(ICONS.note), el("span", {class: "lh-notes-dot", "aria-hidden": "true"}));
+            const pill = host.querySelector(".lh-unread-pill");
+            pill ? pill.after(btn) : host.prepend(btn);
+        }
+        btn.classList.toggle("lh-has-note", !!(this.notesData[ch] && this.notesData[ch].trim()));
+        if (this.notesEl && this.notesEl.dataset.channel !== ch) this.openNotes(); // follow channel switches
+    }
+
+    openNotes() {
+        const ch = this.currentChannelId();
+        if (!ch) return;
+        this.closeNotes();
+        const title = safe(() => document.querySelector(".subtitleContainer_z_gUBg h1, .subtitleContainer_z_gUBg h2").textContent.trim()) || "this channel";
+        const area = el("textarea", {class: "lh-notes-area", "aria-label": `Notes for ${title}`, placeholder: "Anything you want to remember about this channel. Saved automatically, only on this computer.", spellcheck: "true"});
+        area.value = this.notesData[ch] || "";
+        let t;
+        area.addEventListener("input", () => {
+            clearTimeout(t);
+            t = setTimeout(() => {
+                if (area.value.trim()) this.notesData[ch] = area.value; else delete this.notesData[ch];
+                this.api.Data.save("notes", this.notesData);
+                saved.textContent = "Saved";
+                safe(() => document.querySelector(".lh-notes-btn").classList.toggle("lh-has-note", !!area.value.trim()));
+            }, 400);
+            saved.textContent = "Saving…";
+        });
+        area.addEventListener("keydown", e => { e.stopPropagation(); if (e.key === "Escape") this.closeNotes(); });
+        const saved = el("span", {class: "lh-notes-saved", "aria-live": "polite"}, "Saved");
+        const close = el("button", {class: "lh-btn lh-btn-ghost lh-notes-close", type: "button", "aria-label": "Close notes", onClick: () => this.closeNotes()}, "Close");
+        this.notesEl = el("aside", {class: "lh-notes", role: "dialog", "aria-label": `Notes for ${title}`, "data-channel": ch},
+            el("div", {class: "lh-notes-head"}, el("div", null, el("div", {class: "lh-notes-kicker"}, "Notes"), el("div", {class: "lh-notes-title"}, title)), close),
+            area,
+            el("div", {class: "lh-notes-foot"}, saved));
+        document.body.append(this.notesEl);
+        requestAnimationFrame(() => area.focus());
+    }
+
+    closeNotes() {
+        if (this.notesEl) this.notesEl.remove();
+        this.notesEl = null;
+    }
+
+    /* ================= bookmarks ================= */
+    addBookmark(msg, channel) {
+        if (this.bookmarksData.some(b => b.id === msg.id)) return;
+        const author = safe(() => msg.author.globalName || msg.author.username) || "Someone";
+        const text = String(msg.content || "").replace(/\s+/g, " ").slice(0, 140);
+        this.bookmarksData.push({id: msg.id, channelId: channel.id, guildId: channel.guild_id || "@me", author, text, at: Date.now()});
+        this.api.Data.save("bookmarks", this.bookmarksData);
+        BdApi.UI.showToast("Saved — find it in the command palette", {type: "success"});
+    }
+
+    removeBookmark(id) {
+        this.bookmarksData = this.bookmarksData.filter(b => b.id !== id);
+        this.api.Data.save("bookmarks", this.bookmarksData);
+        BdApi.UI.showToast("Bookmark removed", {type: "info"});
+    }
+
+    openBookmark(b) {
+        const path = `/channels/${b.guildId}/${b.channelId}/${b.id}`;
+        const nav = safe(() => BdApi.Webpack.getByKeys("transitionTo"));
+        if (nav && typeof nav.transitionTo === "function") return nav.transitionTo(path);
+        history.pushState({}, "", path);
+        window.dispatchEvent(new PopStateEvent("popstate", {state: {}}));
+    }
+
     /* ================= title bar search pill ================= */
     updateTitleSearch() {
         const existing = document.querySelector(".lh-titlebar-search");
@@ -894,6 +1192,18 @@ module.exports = class LighthouseSettings {
         for (const [id, way] of Object.entries(COLOURWAYS)) {
             if (id !== s.colourway) items.push({group: "Colourways", icon: ICONS.palette, label: `Switch to ${way.label}`, run: () => this.set("colourway", id)});
         }
+        if (s.bookmarks) {
+            for (const b of this.bookmarksData.slice().reverse()) {
+                const when = safe(() => new Date(b.at).toLocaleDateString()) || "";
+                items.push({group: "Bookmarks", icon: ICONS.bookmark, label: `${b.author}: ${b.text || "(attachment)"}`, hint: when, run: () => this.openBookmark(b)});
+            }
+        }
+        if (s.notes) items.push({group: "Lighthouse", icon: ICONS.note, label: "Open notes for this channel", run: () => this.openNotes()});
+        items.push(
+            {group: "Lighthouse", icon: ICONS.bolt, label: "Copy my Lighthouse setup code", run: () => this.copySetupCode()},
+            {group: "Lighthouse", icon: ICONS.bolt, label: "Run Lighthouse health check", run: () => this.runHealthCheck(true)},
+            {group: "Lighthouse", icon: ICONS.bolt, label: "What's new in Lighthouse", run: () => this.showWhatsNew(true)}
+        );
         for (const name of Object.keys(this.profiles)) {
             items.push({group: "Profiles", icon: ICONS.palette, label: `Load profile “${name}”`, run: () => this.loadProfile(name)});
         }
@@ -1031,6 +1341,31 @@ module.exports = class LighthouseSettings {
         );
     }
 
+    BookmarkList() {
+        const React = BdApi.React;
+        const h = React.createElement;
+        const [list, setList] = React.useState(this.bookmarksData.slice().reverse());
+        if (!list.length) return h("div", {className: "lh-profile-empty"}, "No bookmarks yet. Right-click a message and choose Save to Lighthouse bookmarks.");
+        return h("div", {className: "lh-profiles"}, list.map(b => h("div", {key: b.id, className: "lh-profile-row"},
+            h("button", {type: "button", className: "lh-mark-open", onClick: () => this.openBookmark(b)},
+                h("span", {className: "lh-profile-name"}, b.author), h("span", {className: "lh-mark-text"}, b.text || "(attachment)")),
+            h("button", {type: "button", className: "lh-btn lh-btn-ghost", "aria-label": `Remove bookmark from ${b.author}`, onClick: () => { this.removeBookmark(b.id); setList(this.bookmarksData.slice().reverse()); }}, "Remove"))));
+    }
+
+    ShareBox() {
+        const React = BdApi.React;
+        const h = React.createElement;
+        const [code, setCode] = React.useState("");
+        return h("div", {className: "lh-profiles"},
+            h("div", {className: "lh-profile-new"},
+                h("button", {type: "button", className: "lh-btn lh-btn-accent", onClick: () => this.copySetupCode()}, "Copy my setup code")),
+            h("div", {className: "lh-profile-new"},
+                h("label", {className: "lh-sr", htmlFor: "lh-share-code"}, "Paste a setup code"),
+                h("input", {id: "lh-share-code", className: "lh-input", placeholder: "Paste a code that starts with LH1:", value: code, onChange: e => setCode(e.target.value), onKeyDown: e => { if (e.key === "Enter" && this.importSetupCode(code)) setCode(""); }}),
+                h("button", {type: "button", className: "lh-btn", disabled: !code.trim(), onClick: () => { if (this.importSetupCode(code)) setCode(""); }}, "Apply code"))
+        );
+    }
+
     ProfileManager() {
         const React = BdApi.React;
         const h = React.createElement;
@@ -1068,6 +1403,8 @@ module.exports = class LighthouseSettings {
         const s = this.settings;
         const Picker = () => this.ColourwayPicker();
         const Profiles = () => this.ProfileManager();
+        const Share = () => this.ShareBox();
+        const Marks = () => this.BookmarkList();
         const themeOn = safe(() => BdApi.Themes.isEnabled("Lighthouse"));
         const channelAccentCount = Object.keys(this.channelAccents).length;
 
@@ -1091,9 +1428,13 @@ module.exports = class LighthouseSettings {
                     {type: "switch", id: "dashCard", name: "Server overview card", note: "Members, online and unread counts at the bottom of the channel list.", value: s.dashCard},
                     {type: "switch", id: "unreadPill", name: "Unread pill", note: "A pill in the chat showing unread channels in this server. Click it to jump to the next one.", value: s.unreadPill},
                     {type: "switch", id: "collapse", name: "Auto-collapsing sidebars", note: "Channel and member lists rest as slim rails and slide open over the chat on hover.", value: s.collapse},
+                    {type: "switch", id: "iconSet", name: "Matching icon set", note: "Swaps Discord's mixed icons on the main buttons for one consistent line style.", value: s.iconSet},
+                    {type: "switch", id: "bannerGlow", name: "Server banner glow", note: "The server's banner, or its icon, glows softly behind the top of the channel list.", value: s.bannerGlow},
                     {type: "switch", id: "glow", name: "Card hover glow", note: "The edge of the card under your mouse lights up in the accent colour near the cursor.", value: s.glow},
                     {type: "switch", id: "dashHeader", name: "Dashboard header", note: "Big bold channel title and round pill buttons.", value: s.dashHeader},
                     {type: "switch", id: "cheatSheet", name: "Shortcut sheet", note: "Ctrl+Shift+/ shows Lighthouse and Discord keyboard shortcuts on one card.", value: s.cheatSheet},
+                    {type: "switch", id: "notes", name: "Channel notes", note: "A notes button in the channel header opens a notepad for that channel. Notes stay on this computer.", value: s.notes},
+                    {type: "switch", id: "bookmarks", name: "Bookmarks", note: "Right-click a message → Save to Lighthouse bookmarks. Find saved messages in the command palette.", value: s.bookmarks},
                     {type: "switch", id: "friendsBanner", name: "Friend request banner", note: "On Home, a banner at the top shows waiting friend requests. Click it to review them.", value: s.friendsBanner}
                 ]
             },
@@ -1103,6 +1444,7 @@ module.exports = class LighthouseSettings {
                     {type: "switch", id: "titleSearch", name: "Search pill", note: "The middle of the title bar becomes a search pill with the server's name. Click it to open the command palette. Needs the command palette switched on.", value: s.titleSearch},
                     {type: "switch", id: "colourDot", name: "Colourway dot", note: "A small dot in the title bar that opens a quick colourway picker.", value: s.colourDot},
                     {type: "switch", id: "nowPlaying", name: "Now playing", note: "Shows your current Spotify song as a small pill in the title bar while it plays.", value: s.nowPlaying},
+                    {type: "switch", id: "spotifyControls", name: "Spotify buttons", note: "Previous, play/pause and next on the now-playing pill. Spotify only allows this with Premium.", value: s.spotifyControls},
                     {type: "dropdown", id: "winButtons", name: "Window buttons", value: s.winButtons, options: [
                         {label: "Minimal (Windows-style icons, coral close)", value: "minimal"},
                         {label: "Coloured dots", value: "dots"}]}
@@ -1114,6 +1456,7 @@ module.exports = class LighthouseSettings {
                     {type: "switch", id: "bubbles", name: "Chat bubbles", value: s.bubbles},
                     {type: "switch", id: "tintOwn", name: "Tint my own messages", note: "Your bubbles get a soft accent tint so they stand out.", value: s.tintOwn},
                     {type: "switch", id: "compact", name: "Compact mode", note: "Tighter spacing and slimmer bubbles for busy channels.", value: s.compact},
+                    {type: "switch", id: "calmRoles", name: "Calmer role colours", note: "Softens neon role colours so names sit nicely on the dark background.", value: s.calmRoles},
                     {type: "switch", id: "codeBlocks", name: "Editor-style code blocks", note: "Window dots, a language label and SimForge colours for syntax.", value: s.codeBlocks}
                 ]
             },
@@ -1164,12 +1507,22 @@ module.exports = class LighthouseSettings {
             {
                 type: "category", id: "profiles", name: "Profiles", collapsible: true, shown: false,
                 settings: [
+                    {type: "custom", id: "shareCodes", name: "Share your setup", note: "Copy a code of your whole setup to send to a friend, or paste theirs to try it. Your notes and bookmarks are never included.", children: React.createElement(Share)},
                     {type: "custom", id: "profileManager", name: "Saved setups", note: "Save your whole Lighthouse setup under a name and switch between setups. Profiles also show in the command palette. Reopen this window after loading one to see its values.", children: React.createElement(Profiles)}
+                ]
+            },
+            {
+                type: "category", id: "bookmarksCat", name: "Bookmarks", collapsible: true, shown: false,
+                settings: [
+                    {type: "custom", id: "bookmarkList", name: "Saved messages", note: "Click one to jump to it. They also show in the command palette.", children: React.createElement(Marks)}
                 ]
             },
             {
                 type: "category", id: "updates", name: "Updates", collapsible: true, shown: false,
                 settings: [
+                    {type: "switch", id: "healthCheck", name: "Breakage alerts", note: "After Discord updates, Lighthouse checks it can still find the parts it styles, and tells you if something stopped matching.", value: s.healthCheck},
+                    {type: "button", id: "healthNow", name: "Health check", note: "Check right now.", children: "Run health check", onClick: () => this.runHealthCheck(true)},
+                    {type: "switch", id: "whatsNew", name: "What's new card", note: "Shows what changed after Lighthouse updates.", value: s.whatsNew},
                     {type: "switch", id: "autoUpdate", name: "Check for updates", note: "When Discord starts, Lighthouse checks GitHub for a newer version of this plugin and asks before installing it. The theme itself always loads the latest version.", value: s.autoUpdate},
                     {type: "button", id: "checkNow", name: "Check now", note: `You have v${this.meta.version}.`, children: "Check for updates", onClick: () => this.checkForUpdate(true)}
                 ]
@@ -1195,7 +1548,7 @@ module.exports = class LighthouseSettings {
         const panel = BdApi.UI.buildSettingsPanel({
             settings,
             onChange: (category, id, value) => {
-                if (["colourway", "resetAll", "clearChannelAccents", "profileManager", "checkNow"].includes(id)) return;
+                if (["colourway", "resetAll", "clearChannelAccents", "profileManager", "checkNow", "healthNow", "shareCodes", "bookmarkList"].includes(id)) return;
                 this.set(id, (id === "accent" || id === "accent2") ? toHex(value) : value);
             }
         });
@@ -1312,6 +1665,52 @@ const FEATURE_CSS = `
 .lh-eq i:nth-child(2) { animation-delay: -.35s; } .lh-eq i:nth-child(3) { animation-delay: -.7s; }
 @keyframes lh-eq { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
 
+/* Spotify controls on the now-playing pill */
+.lh-np-controls { display: inline-flex; gap: 2px; margin-left: 4px; flex: none; }
+.lh-np-btn { width: 22px; height: 22px; border-radius: 999px; border: 0; background: transparent; color: var(--text-2, #e3e9f2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.lh-np-btn .lh-ico svg { width: 13px; height: 13px; }
+.lh-np-btn:hover { background: color-mix(in srgb, #1db954 30%, transparent); }
+.lh-np-btn:focus-visible { outline: 2px solid #1db954; outline-offset: 1px; }
+.lh-now-playing { padding-right: 4px; max-width: 340px; }
+.lh-np-paused .lh-eq i { animation-play-state: paused; opacity: .5; }
+
+/* channel notes */
+.lh-notes-btn { position: relative; width: 36px; height: 36px; border-radius: 999px; border: 1px solid rgb(var(--lh-tint, 140 170 220) / 0.1); background: rgb(var(--lh-tint, 140 170 220) / 0.07); color: var(--text-4, #93a0b5); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; margin-right: 6px; flex: none; }
+.lh-notes-btn:hover { color: var(--text-1, #fff); background: rgb(var(--lh-tint, 140 170 220) / 0.14); }
+.lh-notes-btn:focus-visible { outline: 2px solid var(--lh-2, #ffab4c); outline-offset: 2px; }
+.lh-notes-btn .lh-ico svg { width: 18px; height: 18px; }
+.lh-notes-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 999px; background: var(--lh-2, #ffab4c); display: none; }
+.lh-has-note .lh-notes-dot { display: block; }
+.lh-notes {
+    position: fixed; z-index: 100000; top: 120px; right: 24px; bottom: 96px; width: min(340px, calc(100vw - 48px));
+    display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 20px;
+    background: var(--lh-raised, #152034); border: 1px solid rgb(var(--lh-tint, 140 170 220) / 0.16);
+    box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.85); font-family: var(--font, 'Manrope'), sans-serif;
+    animation: lh-slide .2s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes lh-slide { from { opacity: 0; transform: translateX(16px); } }
+.lh-notes-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.lh-notes-kicker { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--lh-2, #ffab4c); }
+.lh-notes-title { font: 800 17px/1.2 var(--lh-display-font, sans-serif); color: var(--text-1, #f3f6fa); overflow-wrap: anywhere; }
+.lh-notes-area { flex: 1; resize: none; padding: 12px; border-radius: 14px; font: 500 14px/1.6 var(--font, 'Manrope'), sans-serif; color: var(--text-2, #e3e9f2); background: rgb(0 0 0 / 0.2); border: 1px solid rgb(var(--lh-tint, 140 170 220) / 0.12); outline: none; }
+.lh-notes-area:focus { border-color: color-mix(in srgb, var(--lh-2, #ffab4c), transparent 40%); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lh-2, #ffab4c), transparent 85%); }
+.lh-notes-area::placeholder { color: var(--text-5, #8190a6); }
+.lh-notes-foot { font-size: 12px; color: var(--text-5, #8190a6); }
+
+/* what's new */
+.lh-news { width: min(560px, calc(100vw - 32px)); }
+.lh-news-list { display: flex; flex-direction: column; gap: 10px; }
+.lh-news-entry { padding: 14px 16px; border-radius: 16px; background: rgb(var(--lh-tint, 140 170 220) / 0.05); border: 1px solid rgb(var(--lh-tint, 140 170 220) / 0.1); }
+.lh-news-meta { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--text-5, #8190a6); margin-bottom: 4px; }
+.lh-news-tag { padding: 2px 8px; border-radius: 999px; background: var(--lh-2, #ffab4c); color: var(--lh-on-accent, #1d1206); font-weight: 800; }
+.lh-news-title { margin: 0 0 6px; font: 800 16px/1.3 var(--lh-display-font, sans-serif); color: var(--text-1, #f3f6fa); }
+.lh-news-items { margin: 0; padding-left: 18px; color: var(--text-3, #c9d2df); font-size: 14px; line-height: 1.6; }
+
+/* bookmarks list in settings */
+.lh-mark-open { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; text-align: left; background: none; border: 0; cursor: pointer; padding: 0; font: inherit; }
+.lh-mark-text { color: var(--text-muted, #aaa); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lh-mark-open:focus-visible { outline: 2px solid var(--lh-2, #ffab4c); outline-offset: 2px; border-radius: 8px; }
+
 /* friend requests banner */
 .lh-friends-banner {
     display: flex; align-items: center; gap: 10px; margin: 12px 20px 4px; padding: 10px 12px 10px 14px; border-radius: 14px; cursor: pointer;
@@ -1384,5 +1783,5 @@ body.lh-focus .lh-unread-pill { display: none; }
 .lh-profile-name { flex: 1; min-width: 0; font-weight: 700; color: var(--text-default, #fff); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lh-profile-empty { color: var(--text-muted, #999); font-size: 14px; }
 
-@media (prefers-reduced-motion: reduce) { .lh-palette, .lh-cheat, .lh-swatch-pop { animation: none; } .lh-eq i { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lh-palette, .lh-cheat, .lh-swatch-pop, .lh-notes { animation: none; } .lh-eq i { animation: none; } }
 `;

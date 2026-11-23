@@ -1,0 +1,31 @@
+{
+  "entries": [
+    {
+      "id": "2026-11-23-c",
+      "version": "3.3.0",
+      "date": "23 Nov 2026",
+      "title": "Icons, notes, bookmarks and more",
+      "items": [
+        "Matching line icons on the main buttons (header, user panel, message box, title bar).",
+        "Channel notes: a notepad for each channel, opened from the channel header.",
+        "Bookmarks: right-click a message → Save to Lighthouse bookmarks, then find it in Ctrl+K.",
+        "Spotify buttons on the now-playing pill (needs Spotify Premium).",
+        "Share your setup with a code, or paste a friend's.",
+        "Server banner glow, embeds as cards, calmer role colours.",
+        "Breakage alerts if a Discord update stops Lighthouse finding something."
+      ]
+    },
+    {
+      "id": "2026-11-23-b",
+      "version": "3.2.0",
+      "date": "23 Nov 2026",
+      "title": "Restyle everywhere, and updates from GitHub",
+      "items": [
+        "Settings, right-click menus, tooltips, pickers, dialogs, the friends page, calls and forums restyled.",
+        "Colourway dot and quick picker in the title bar, shortcut sheet on Ctrl+Shift+/.",
+        "Server folders open as a tray under the strip.",
+        "Lighthouse now updates itself from GitHub."
+      ]
+    }
+  ]
+}
