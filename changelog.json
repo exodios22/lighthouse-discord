@@ -1,6 +1,18 @@
 {
   "entries": [
     {
+      "id": "2026-11-23-d",
+      "version": "3.4.0",
+      "date": "23 Nov 2026",
+      "title": "Rockstar fonts",
+      "items": [
+        "New text font: Rockstar (Chalet, as in GTA V's menus).",
+        "New heading font: Pricedown, the GTA logo font.",
+        "If they aren't installed on your PC, Lighthouse uses Archivo and Anton, the closest free fonts.",
+        "Bookmark item now sits next to Discord's own Bookmark Message."
+      ]
+    },
+    {
       "id": "2026-11-23-c",
       "version": "3.3.1",
       "date": "23 Nov 2026",

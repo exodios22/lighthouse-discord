@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.3.4
+ * @version 3.4.0
  */
 
 const COLOURWAYS = {
@@ -44,6 +44,7 @@ const FONTS = {
     manrope: {label: "Manrope", css: "'Manrope'"},
     jakarta: {label: "Plus Jakarta Sans", css: "'Plus Jakarta Sans'"},
     inter: {label: "Inter", css: "'Inter'"},
+    rockstar: {label: "Rockstar (Chalet, GTA V menus)", css: "'Chalet London Nineteen Sixty', 'ChaletLondonNineteenSixty', 'Chalet-LondonNineteenSixty', 'Chalet', 'Archivo'"},
     discord: {label: "Discord default", css: "''"}
 };
 
@@ -360,7 +361,9 @@ module.exports = class LighthouseSettings {
 
         const display = s.displayFont === "bricolage"
             ? "'Bricolage Grotesque', var(--font), sans-serif"
-            : "var(--font), sans-serif";
+            : s.displayFont === "pricedown"
+                ? "'Pricedown Bl', 'Pricedown', 'Pricedown Black', 'Anton', var(--font), sans-serif"
+                : "var(--font), sans-serif";
         const motion = s.motion && !s.a11y;
 
         const body = {
@@ -1519,7 +1522,7 @@ module.exports = class LighthouseSettings {
                 type: "category", id: "fonts", name: "Fonts", collapsible: true, shown: false,
                 settings: [
                     {type: "dropdown", id: "bodyFont", name: "Text font", value: s.bodyFont, options: Object.entries(FONTS).map(([value, f]) => ({label: f.label, value}))},
-                    {type: "dropdown", id: "displayFont", name: "Heading font", note: "Server name and channel title.", value: s.displayFont, options: [{label: "Bricolage Grotesque", value: "bricolage"}, {label: "Same as text font", value: "body"}]}
+                    {type: "dropdown", id: "displayFont", name: "Heading font", note: "Server name and channel title. Pricedown and Chalet are used if installed on your PC; otherwise Lighthouse uses Anton and Archivo, the closest free fonts.", value: s.displayFont, options: [{label: "Bricolage Grotesque", value: "bricolage"}, {label: "Pricedown (GTA logo)", value: "pricedown"}, {label: "Same as text font", value: "body"}]}
                 ]
             },
             {
