@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.3.3
+ * @version 3.3.4
  */
 
 const COLOURWAYS = {
@@ -498,25 +498,22 @@ module.exports = class LighthouseSettings {
                 const msg = props && (props.message || (props.target && props.target.message));
                 const channel = (props && props.channel) || (msg && safe(() => BdApi.Webpack.getStore("ChannelStore").getChannel(msg.channel_id)));
                 if (!this.settings.bookmarks || !tree || !tree.props) return;
-                if (!msg || !msg.id || !channel) {
-                    const keys = safe(() => Object.keys(props || {}).join(", ")) || "none";
-                    const dbg = BdApi.ContextMenu.buildItem({label: `Lighthouse debug: ${msg ? "no channel" : "no message"} (${keys})`, id: "lighthouse-debug", disabled: true});
-                    const k = tree.props.children; Array.isArray(k) ? k.push(dbg) : (tree.props.children = [k, dbg]);
-                    return;
-                }
+                if (!msg || !msg.id || !channel) return;
                 const saved = this.bookmarksData.some(b => b.id === msg.id);
                 const item = BdApi.ContextMenu.buildItem({
                     label: saved ? "Remove from Lighthouse bookmarks" : "Save to Lighthouse bookmarks",
                     id: "lighthouse-bookmark",
                     action: () => saved ? this.removeBookmark(msg.id) : this.addBookmark(msg, channel)
                 });
-                const anchors = ["copy-text", "mark-unread", "copy-link", "bookmark", "pin", "reply", "forward"];
+                const anchors = ["copy-text", "translate", "bookmark", "mark-unread", "copy-link"];
                 const isAnchor = c => c && c.props && anchors.includes(c.props.id);
                 const hasAnchor = arr => Array.isArray(arr) && arr.some(c => isAnchor(c) || (c && c.props && Array.isArray(c.props.children) && c.props.children.some(isAnchor)));
                 const group = safe(() => BdApi.Utils.findInTree(tree, n => n && hasAnchor(n.children), {walkable: ["props", "children"]}));
                 if (group && Array.isArray(group.children)) {
                     const inner = group.children.find(c => c && c.props && Array.isArray(c.props.children) && c.props.children.some(isAnchor));
-                    (inner ? inner.props.children : group.children).push(item);
+                    const list = inner ? inner.props.children : group.children;
+                    const at = list.findIndex(c => c && c.props && /bookmark/.test(String(c.props.id)));
+                    at >= 0 ? list.splice(at + 1, 0, item) : list.push(item);
                     return;
                 }
                 const kids = tree.props.children;
