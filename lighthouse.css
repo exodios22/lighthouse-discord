@@ -1,0 +1,1272 @@
+/**
+ * @name Lighthouse
+ * @author Lighthouse
+ * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
+ * @version 5.2.0
+ */
+
+/*
+ * Base: "midnight" by refact0r (MIT) — https://github.com/refact0r/midnight-discord
+ *   Loaded remotely so its selectors stay up to date when Discord renames classes.
+ * Server strip: adapted from "Horizontal Server List" by Gibbu (MIT) — https://github.com/DiscordStyles/HorizontalServerList
+ */
+@import url('https://refact0r.github.io/midnight-discord/build/midnight.css');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@500&display=swap');
+
+/* ============================================================
+   SETTINGS
+   Easiest: use the LighthouseSettings plugin's settings window.
+   Without the plugin, edit these by hand.
+   ============================================================ */
+body {
+    /* layout */
+    --lh-server-bar: top;         /* top | side */
+    --lh-bubbles: on;             /* on | off */
+    --lh-filled-channel: on;      /* on | off */
+    --lh-dash-header: on;         /* on | off — big SimForge-style channel header */
+    --lh-collapse: off;           /* on | off — channel and member lists shrink to slim rails, open on hover */
+    --lh-motion: on;              /* on | off */
+    --lh-compact: off;            /* on | off — tighter messages */
+    --lh-code: on;                /* on | off — editor-style code blocks */
+    --lh-a11y: off;               /* on | off — strong focus rings, bigger targets, no motion */
+    --lh-glow: off;               /* on | off — cards glow under the mouse (needs the plugin) */
+    --lh-winbuttons: minimal;     /* minimal | dots — window buttons in the title bar (dots also needs --custom-window-controls: on) */
+
+    /* fonts */
+    --font: 'Manrope';
+    --lh-display-font: 'Bricolage Grotesque', 'Manrope', sans-serif;
+    --code-font: 'JetBrains Mono';
+    font-weight: 500;
+
+    /* shape */
+    --gap: 12px;
+    --border-thickness: 1px;
+    --divider-thickness: 3px;
+    --lh-radius-lg: 18px;
+    --lh-radius-md: 14px;
+    --lh-radius-sm: 10px;
+    --lh-avatar-radius: 26%;      /* 0 = square, 26% = soft square, 50% = circle */
+
+    /* midnight base options (tuned for Lighthouse) */
+    --animations: on;
+    --list-item-transition: 0.18s ease;
+    --border-hover-transition: 0.2s ease;
+    --top-bar-height: 40px;
+    --top-bar-button-position: off;
+    --top-bar-title-position: off;
+    --subtle-top-bar-title: off;
+    --custom-window-controls: off;   /* off = Lighthouse window buttons; on = coloured dots */
+    --window-control-size: 14px;
+    --custom-dms-icon: off;
+    --custom-dms-background: off;
+    --background-image: off;
+    --transparency-tweaks: off;
+    --remove-bg-layer: off;
+    --panel-blur: off;
+    --custom-chatbar: separated;
+    --chatbar-height: 56px;
+    --small-user-panel: off;
+}
+
+/* ============================================================
+   COLOURS — SimForge
+   ============================================================ */
+:root {
+    --colors: on;
+
+    /* accent */
+    --lh-1: #ffd9a8;             /* links, accent text */
+    --lh-2: #ffab4c;             /* main accent */
+    --lh-4: #ffbb6b;             /* hover */
+    --lh-5: #f0953a;             /* pressed */
+    --lh-b: #ffc75e;             /* second gradient colour */
+    --lh-on-accent: #1d1206;     /* text on accent */
+    --lh-gradient: linear-gradient(135deg, var(--lh-2), var(--lh-b));
+
+    /* surfaces */
+    --lh-base: #0a111d;          /* window background */
+    --lh-panel: #0f1828;         /* cards */
+    --lh-raised: #152034;        /* popouts, menus, inputs */
+    --lh-tint: 140 170 220;      /* borders, hovers, bubbles */
+
+    /* SimForge category colours (status dots, roles, code) */
+    --lh-coral: #e88a95;
+    --lh-teal: #6ccfb0;
+    --lh-periwinkle: #8b9cf0;
+    --lh-gold: #f5c04a;
+
+    /* text */
+    --text-0: var(--lh-on-accent);
+    --text-1: #f3f6fa;
+    --text-2: #e3e9f2;
+    --text-3: #c9d2df;
+    --text-4: #93a0b5;
+    --text-5: #8190a6;
+
+    /* derived — no need to edit */
+    --lh-bubble: rgb(var(--lh-tint) / 0.07);
+    --lh-bubble-border: rgb(var(--lh-tint) / 0.1);
+    --bg-1: rgb(var(--lh-tint) / 0.2);
+    --bg-2: rgb(var(--lh-tint) / 0.1);
+    --bg-3: var(--lh-base);
+    --bg-4: var(--lh-panel);
+    --bg-floating: var(--lh-raised);
+    --hover: rgb(var(--lh-tint) / 0.06);
+    --active: rgb(var(--lh-tint) / 0.11);
+    --active-2: rgb(var(--lh-tint) / 0.16);
+    --message-hover: rgb(var(--lh-tint) / 0.035);
+
+    --accent-1: var(--lh-1);
+    --accent-2: var(--lh-2);
+    --accent-3: var(--lh-2);
+    --accent-4: var(--lh-4);
+    --accent-5: var(--lh-5);
+    --accent-new: var(--lh-coral);
+    --mention: linear-gradient(to right, color-mix(in srgb, var(--lh-2), transparent 86%) 40%, transparent);
+    --mention-hover: linear-gradient(to right, color-mix(in srgb, var(--lh-2), transparent 80%) 40%, transparent);
+    --reply: linear-gradient(to right, color-mix(in srgb, var(--text-3), transparent 92%) 40%, transparent);
+    --reply-hover: linear-gradient(to right, color-mix(in srgb, var(--text-3), transparent 88%) 40%, transparent);
+
+    --online: var(--lh-teal);
+    --dnd: var(--lh-coral);
+    --idle: var(--lh-gold);
+    --streaming: var(--lh-periwinkle);
+    --offline: var(--text-5);
+
+    --border-light: rgb(var(--lh-tint) / 0.07);
+    --border: rgb(var(--lh-tint) / 0.12);
+    --border-hover: rgb(var(--lh-tint) / 0.2);
+    --button-border: rgb(var(--lh-tint) / 0.1);
+
+    --red-1: #f2a9b1; --red-2: #e88a95; --red-3: #dc6f7b; --red-4: #c95b68; --red-5: #b24a57;
+    --green-1: #95e0c8; --green-2: #6ccfb0; --green-3: #55bf9f; --green-4: #41aa8b; --green-5: #2f9476;
+    --blue-1: #b3bff6; --blue-2: #8b9cf0; --blue-3: #7487e6; --blue-4: #5f73d8; --blue-5: #4c60c4;
+    --yellow-1: #f9d68a; --yellow-2: #f5c04a; --yellow-3: #ebb02e; --yellow-4: #d69c1c; --yellow-5: #bd8812;
+    --purple-1: #d4b9fb; --purple-2: #b893f5; --purple-3: #a37ae9; --purple-4: #8d63da; --purple-5: #774ec6;
+}
+
+/* raised surfaces and radii; same selector as the base so this wins by coming later */
+body,
+.theme-dark:not(.custom-user-profile-theme),
+.theme-light:not(.custom-user-profile-theme) {
+    --background-surface-high: var(--lh-raised);
+    --background-surface-higher: var(--lh-raised);
+    --background-surface-highest: var(--lh-raised);
+    --bg-surface-raised: var(--lh-raised);
+    --bg-surface-overlay-tmp: var(--lh-raised);
+    --card-background-default: var(--lh-raised);
+    --background-code: rgb(var(--lh-tint) / 0.07);
+    --radius-lg: var(--lh-radius-lg);
+    --radius-md: var(--lh-radius-md);
+    --radius-sm: var(--lh-radius-sm);
+}
+
+@property --lh-server-bar { syntax: 'top | side'; inherits: false; initial-value: top; }
+@property --lh-bubbles { syntax: 'off | on'; inherits: false; initial-value: on; }
+@property --lh-filled-channel { syntax: 'off | on'; inherits: false; initial-value: on; }
+@property --lh-dash-header { syntax: 'off | on'; inherits: false; initial-value: on; }
+@property --lh-collapse { syntax: 'off | on'; inherits: false; initial-value: off; }
+@property --lh-motion { syntax: 'off | on'; inherits: false; initial-value: on; }
+@property --lh-compact { syntax: 'off | on'; inherits: false; initial-value: off; }
+@property --lh-code { syntax: 'off | on'; inherits: false; initial-value: on; }
+@property --lh-a11y { syntax: 'off | on'; inherits: false; initial-value: off; }
+@property --lh-glow { syntax: 'off | on'; inherits: false; initial-value: off; }
+@property --lh-mx { syntax: '<length>'; inherits: true; initial-value: -999px; }
+@property --lh-my { syntax: '<length>'; inherits: true; initial-value: -999px; }
+@property --lh-winbuttons { syntax: 'minimal | dots'; inherits: false; initial-value: minimal; }
+@property --lh-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+
+/* ============================================================
+   BACKGROUND — plain SimForge navy
+   ============================================================ */
+.bg_Fd0FEH {
+    background: var(--lh-base) !important;
+}
+
+/* ============================================================
+   TITLE BAR
+   pill back/forward, title (or the plugin's search pill) in the
+   middle, round icon buttons, clean window buttons
+   ============================================================ */
+.bar_3zSH5d {
+    align-items: center;
+}
+/* back / forward as one pill */
+.bar_3zSH5d .backForwardButtons_nS9Yqn {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    margin-left: 8px;
+    border-radius: 999px;
+    background: rgb(var(--lh-tint) / 0.06);
+    border: 1px solid rgb(var(--lh-tint) / 0.1);
+}
+.bar_3zSH5d .backForwardButtons_nS9Yqn > * {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.bar_3zSH5d .backForwardButtons_nS9Yqn > *:hover {
+    background: rgb(var(--lh-tint) / 0.12) !important;
+}
+
+/* centre title as a pill */
+.title_3zSH5d .title_LnjVAX {
+    gap: 8px;
+    height: 28px;
+    padding: 0 14px 0 5px;
+    border-radius: 999px;
+    background: rgb(var(--lh-tint) / 0.06);
+    border: 1px solid rgb(var(--lh-tint) / 0.1);
+}
+.title_3zSH5d .title_LnjVAX .icon_qqAqr1 {
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 6px !important;
+}
+.title_3zSH5d .title_LnjVAX [class*='text-sm'] {
+    font-family: var(--lh-display-font) !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--text-2) !important;
+    letter-spacing: -0.01em;
+}
+/* the plugin's search pill replaces the plain title */
+.title_3zSH5d:has(.lh-titlebar-search) .title_LnjVAX {
+    display: none !important;
+}
+
+/* inbox / help as round buttons */
+.trailing_3zSH5d {
+    gap: 4px;
+    align-items: center;
+}
+.trailing_3zSH5d > :not(.winButtons_3zSH5d) {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-4);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.trailing_3zSH5d > :not(.winButtons_3zSH5d):hover {
+    background: rgb(var(--lh-tint) / 0.1);
+    color: var(--text-1);
+}
+
+/* window buttons */
+@container body style(--lh-winbuttons: minimal) {
+    .winButtons_3zSH5d {
+        gap: 2px;
+        padding: 0 8px 0 6px !important;
+        align-items: center;
+    }
+    .winButtons_3zSH5d::before {
+        content: '';
+        width: 1px;
+        height: 16px;
+        margin: 0 6px 0 2px !important;
+        background: rgb(var(--lh-tint) / 0.16);
+    }
+    .winButton_3zSH5d {
+        width: 38px !important;
+        height: 28px !important;
+        border-radius: 8px;
+        color: var(--text-4) !important;
+        background: transparent !important;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+    .winButton_3zSH5d:hover {
+        background: rgb(var(--lh-tint) / 0.12) !important;
+        color: var(--text-1) !important;
+    }
+    .winButtonClose_3zSH5d:hover {
+        background: var(--lh-coral) !important;
+        color: #fff !important;
+    }
+    .winButton_3zSH5d > svg {
+        display: block !important;
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* ============================================================
+   TYPE
+   ============================================================ */
+.name_XH4OpX,
+.subtitleContainer_z_gUBg h1,
+.subtitleContainer_z_gUBg h2 {
+    font-family: var(--lh-display-font) !important;
+    letter-spacing: -0.015em;
+}
+.name_XH4OpX {
+    font-size: 17px;
+    font-weight: 800 !important;
+}
+
+/* ============================================================
+   CARDS — every panel is a SimForge card
+   ============================================================ */
+.guilds_pog62O,
+.sidebarList_pog62O,
+.panels_pog62O,
+.chatContent_z_gUBg,
+.messagesWrapper_8AE1Qq,
+.container_86es0b,
+.subtitleContainer_z_gUBg {
+    transition: border-color var(--border-hover-transition), box-shadow var(--border-hover-transition), width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.035) inset, 0 18px 40px -24px rgb(0 0 0 / 0.8);
+}
+.panels_pog62O {
+    border-radius: var(--lh-radius-lg) !important;
+}
+
+/* channel category headings as small caps, like SimForge's section labels */
+[class*='containerDefault_'] [class*='mainContent_'] h3,
+[class*='containerDefault_'] [class*='name_'][class*='overflow'] {
+    letter-spacing: 0.06em;
+}
+
+/* pill search with a keyboard hint */
+[class*='searchBar_'] {
+    border-radius: 999px !important;
+}
+
+/* ============================================================
+   DASHBOARD HEADER — big bold channel title, pill buttons
+   ============================================================ */
+@container body style(--lh-dash-header: on) {
+    #app-mount {
+        --custom-channel-header-height: 68px !important;
+    }
+    .subtitleContainer_z_gUBg {
+        height: 68px !important;
+    }
+    .subtitleContainer_z_gUBg h1,
+    .subtitleContainer_z_gUBg h2 {
+        font-size: 22px !important;
+        font-weight: 800 !important;
+        line-height: 1.15;
+    }
+    .subtitleContainer_z_gUBg .toolbar_ybUK7Z {
+        gap: 6px;
+    }
+    .subtitleContainer_z_gUBg .toolbar_ybUK7Z > .clickable_ybUK7Z,
+    .subtitleContainer_z_gUBg .toolbar_ybUK7Z > [class*='iconWrapper_'] {
+        width: 36px;
+        height: 36px;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: rgb(var(--lh-tint) / 0.07);
+        border: 1px solid rgb(var(--lh-tint) / 0.1);
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .subtitleContainer_z_gUBg .toolbar_ybUK7Z > .clickable_ybUK7Z:hover,
+    .subtitleContainer_z_gUBg .toolbar_ybUK7Z > [class*='iconWrapper_']:hover {
+        background: rgb(var(--lh-tint) / 0.14);
+        border-color: rgb(var(--lh-tint) / 0.2);
+    }
+    .subtitleContainer_z_gUBg [class*='searchBar_'] {
+        height: 36px;
+        background: rgb(var(--lh-tint) / 0.06) !important;
+        border: 1px solid rgb(var(--lh-tint) / 0.12);
+    }
+}
+
+/* ============================================================
+   CHAT BAR — amber ring that turns while you type
+   ============================================================ */
+#app-mount .channelTextArea_z_gUBg {
+    border-radius: 999px !important;
+}
+#app-mount .channelTextArea_z_gUBg:focus-within {
+    border-color: transparent !important;
+    background:
+        linear-gradient(var(--lh-raised), var(--lh-raised)) padding-box,
+        conic-gradient(from var(--lh-angle), var(--lh-2), var(--lh-b), var(--lh-1), var(--lh-2)) border-box !important;
+    box-shadow: 0 0 26px -8px color-mix(in srgb, var(--lh-2), transparent 45%);
+}
+@container body style(--lh-motion: on) {
+    #app-mount .channelTextArea_z_gUBg:focus-within {
+        animation: lh-spin 4s linear infinite;
+    }
+}
+@keyframes lh-spin {
+    to { --lh-angle: 360deg; }
+}
+/* the "no permission" bar matches the pill */
+.wrapper_ST_Y69 {
+    border-radius: 999px !important;
+}
+
+/* ============================================================
+   CHANNELS — SimForge's solid amber nav pill
+   ============================================================ */
+.wrapper_TNyK-N .link_TNyK-N {
+    border-radius: var(--lh-radius-sm);
+    min-height: 36px;
+}
+@container body style(--lh-filled-channel: on) {
+    .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N {
+        background: var(--lh-gradient) !important;
+        color: var(--text-0) !important;
+        font-weight: 700;
+        box-shadow: 0 6px 20px -10px color-mix(in srgb, var(--lh-2), transparent 20%);
+    }
+    .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N *,
+    .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N svg {
+        color: var(--text-0) !important;
+    }
+}
+.unread_TNyK-N {
+    background: var(--lh-2);
+}
+
+/* ============================================================
+   CHAT BUBBLES
+   ============================================================ */
+@container body style(--lh-bubbles: on) {
+    .message_SY_P2T [id^='message-content-']:not([class*='repliedTextContent']) {
+        display: inline-block;
+        width: fit-content;
+        max-width: 100%;
+        box-sizing: border-box;
+        /* Discord shifts message text left with a negative margin + matching padding; undo both */
+        margin: 4px 0 0 0 !important;
+        padding: 9px 15px !important;
+        text-indent: 0 !important;
+        background: var(--lh-bubble);
+        border: 1px solid var(--lh-bubble-border);
+        border-radius: 6px 18px 18px 18px;
+        line-height: 1.55;
+        color: var(--text-3);
+    }
+    .message_SY_P2T [id^='message-content-']:empty {
+        display: none;
+    }
+    .message_SY_P2T.mentioned_SY_P2T [id^='message-content-']:not([class*='repliedTextContent']) {
+        background: color-mix(in srgb, var(--lh-2) 14%, transparent);
+        border-color: color-mix(in srgb, var(--lh-2), transparent 50%);
+    }
+}
+@container body style(--lh-motion: on) {
+    li[id^='chat-messages-']:last-of-type .message_SY_P2T {
+        animation: lh-arrive 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+}
+@keyframes lh-arrive {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+.mention_oJAkDB {
+    background: color-mix(in srgb, var(--lh-2), transparent 78%);
+    color: var(--lh-1);
+    border-radius: 6px;
+    padding: 0 4px;
+    font-weight: 600;
+}
+.mention_oJAkDB:hover {
+    background: var(--lh-2);
+    color: var(--text-0);
+}
+.reaction_MmKct8 {
+    border-radius: 999px;
+}
+
+/* ============================================================
+   SQUARE PROFILE PICTURES
+   ============================================================ */
+foreignObject[mask*='svg-mask-avatar'],
+[class*='avatar'][role='img'] > svg > foreignObject[mask],
+[class*='wrapper_'][role='img'] > svg[class*='mask_'] > foreignObject[mask] {
+    mask: none !important;
+}
+foreignObject[mask*='svg-mask-avatar'] img,
+foreignObject[mask*='svg-mask-avatar'] > div,
+[class*='avatar'][role='img'] > svg > foreignObject img,
+[class*='avatar'][role='img'] > svg > foreignObject > div,
+[class*='wrapper_'][role='img'] > svg[class*='mask_'] > foreignObject img,
+[class*='wrapper_'][role='img'] > svg[class*='mask_'] > foreignObject > div {
+    border-radius: var(--lh-avatar-radius) !important;
+}
+img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
+[class*='voiceUser'] [class*='avatar'],
+[class*='replyAvatar'] {
+    border-radius: var(--lh-avatar-radius) !important;
+}
+
+/* ============================================================
+   SERVER STRIP ACROSS THE TOP
+   adapted from Horizontal Server List by Gibbu (MIT)
+   ============================================================ */
+@container body style(--lh-server-bar: top) {
+    #app-mount {
+        --lh-strip: var(--custom-guild-list-width);
+    }
+    .base_pog62O[data-fullscreen='false'] .content_pog62O {
+        margin-top: calc(var(--lh-strip) + var(--gap));
+        overflow: visible !important;
+    }
+    :fullscreen .content_pog62O {
+        margin: 0 !important;
+    }
+    .sidebar_pog62O {
+        overflow: visible !important;
+    }
+    .guilds_pog62O {
+        transform-origin: top left;
+        rotate: -90deg;
+        translate: 0 calc(var(--gap) * -1);
+        height: calc(100vw - var(--gap) * 2) !important;
+        bottom: unset;
+        left: 0;
+        margin: 0 !important;
+        position: absolute !important;
+
+        .stack_TWWX0S {
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+    }
+    .tree_5dqHTG {
+        padding-top: var(--size-sm);
+    }
+    .wrapper_JJ-hgR,
+    .folderPreview_RTMSuZ,
+    .folderIconWrapper_RTMSuZ,
+    .lowerBadge_hqZPsU,
+    .upperBadge_hqZPsU {
+        rotate: 90deg;
+    }
+    .childWrapper_JJ-hgR {
+        rotate: 0deg;
+    }
+    [class^='notice_'] + .content_pog62O {
+        --lh-strip: calc(36px + var(--custom-guild-list-width));
+    }
+    .sidebarList_pog62O {
+        margin-left: 0;
+    }
+}
+@container body style(--lh-motion: on) {
+    .listItem_rwEpIL .wrapper_JJ-hgR {
+        transition: scale 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .listItem_rwEpIL:hover .wrapper_JJ-hgR {
+        scale: 1.07;
+    }
+}
+
+/* ============================================================
+   AUTO-COLLAPSING SIDEBARS
+   Channel and member lists rest as slim rails and slide open over
+   the chat when hovered, so chat keeps the full width.
+   ============================================================ */
+@container body style(--lh-collapse: on) {
+    .sidebar_pog62O {
+        width: 76px !important;
+        min-width: 76px !important;
+        z-index: 20;
+    }
+    .sidebar_pog62O .sidebarList_pog62O,
+    .sidebar_pog62O .panels_pog62O {
+        flex: none;
+        width: 76px !important;
+        transition: width 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.24s ease;
+        overflow: hidden;
+    }
+    .sidebar_pog62O:hover .sidebarList_pog62O,
+    .sidebar_pog62O:hover .panels_pog62O,
+    .sidebar_pog62O:focus-within .sidebarList_pog62O,
+    .sidebar_pog62O:focus-within .panels_pog62O {
+        width: 300px !important;
+        box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(var(--lh-tint) / 0.14);
+    }
+    .sidebar_pog62O [class*='resizeHandle'] {
+        display: none;
+    }
+
+    .container_86es0b {
+        width: 64px !important;
+        min-width: 64px !important;
+        transition: width 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.24s ease;
+        position: relative;
+        z-index: 20;
+    }
+    .container_86es0b:hover,
+    .container_86es0b:focus-within {
+        width: 260px !important;
+        min-width: 260px !important;
+        margin-left: -196px !important; /* grow over the chat instead of pushing it */
+        box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(var(--lh-tint) / 0.14);
+    }
+    /* role headings collapse to a thin divider while the rail is slim */
+    .container_86es0b:not(:hover):not(:focus-within) h3 {
+        visibility: hidden;
+        height: 8px;
+    }
+}
+
+/* ============================================================
+   FOCUS MODE (Ctrl+Shift+F, from the LighthouseSettings plugin)
+   Hides everything but the chat.
+   ============================================================ */
+body.lh-focus .sidebar_pog62O,
+body.lh-focus .container_86es0b,
+body.lh-focus .content_z_gUBg > .membersWrap_86es0b {
+    display: none !important;
+}
+body.lh-focus .base_pog62O[data-fullscreen='false'] .content_pog62O {
+    margin-top: 0 !important;
+}
+body.lh-focus .page_pog62O {
+    padding-left: var(--gap);
+}
+@container body style(--lh-motion: on) {
+    body.lh-focus .chat_z_gUBg {
+        animation: lh-focus-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+}
+@keyframes lh-focus-in {
+    from { opacity: 0.4; transform: scale(0.985); }
+    to { opacity: 1; transform: none; }
+}
+
+/* ============================================================
+   COMPACT MODE
+   ============================================================ */
+@container body style(--lh-compact: on) {
+    .message_SY_P2T {
+        padding-top: 1px !important;
+        padding-bottom: 1px !important;
+    }
+    .message_SY_P2T[class*='groupStart'] {
+        margin-top: 10px !important;
+    }
+    .message_SY_P2T [id^='message-content-']:not([class*='repliedTextContent']) {
+        padding: 5px 12px !important;
+        margin-top: 2px !important;
+        line-height: 1.42 !important;
+        border-radius: 4px 14px 14px 14px !important;
+    }
+}
+
+/* ============================================================
+   EDITOR-STYLE CODE BLOCKS
+   window dots + language label, SimForge colours for syntax
+   ============================================================ */
+@container body style(--lh-code: on) {
+    pre:has(> code.hljs) {
+        --lh-lang: 'Code';
+        margin-top: 6px;
+        border-radius: var(--lh-radius-md);
+        box-shadow: 0 12px 30px -18px rgb(0 0 0 / 0.7);
+    }
+    pre:has(> code.hljs.js),
+    pre:has(> code.hljs.javascript),
+    pre:has(> code.hljs.jsx) {
+        --lh-lang: 'JavaScript';
+    }
+    pre:has(> code.hljs.ts),
+    pre:has(> code.hljs.typescript),
+    pre:has(> code.hljs.tsx) {
+        --lh-lang: 'TypeScript';
+    }
+    pre:has(> code.hljs.py),
+    pre:has(> code.hljs.python) {
+        --lh-lang: 'Python';
+    }
+    pre:has(> code.hljs.rs),
+    pre:has(> code.hljs.rust) {
+        --lh-lang: 'Rust';
+    }
+    pre:has(> code.hljs.cs),
+    pre:has(> code.hljs.csharp) {
+        --lh-lang: 'C#';
+    }
+    pre:has(> code.hljs.cpp),
+    pre:has(> code.hljs.c\+\+),
+    pre:has(> code.hljs.cc),
+    pre:has(> code.hljs.hpp) {
+        --lh-lang: 'C++';
+    }
+    pre:has(> code.hljs.c),
+    pre:has(> code.hljs.h) {
+        --lh-lang: 'C';
+    }
+    pre:has(> code.hljs.java) {
+        --lh-lang: 'Java';
+    }
+    pre:has(> code.hljs.go),
+    pre:has(> code.hljs.golang) {
+        --lh-lang: 'Go';
+    }
+    pre:has(> code.hljs.lua) {
+        --lh-lang: 'Lua';
+    }
+    pre:has(> code.hljs.json) {
+        --lh-lang: 'JSON';
+    }
+    pre:has(> code.hljs.css),
+    pre:has(> code.hljs.scss) {
+        --lh-lang: 'CSS';
+    }
+    pre:has(> code.hljs.html),
+    pre:has(> code.hljs.xml) {
+        --lh-lang: 'HTML';
+    }
+    pre:has(> code.hljs.sh),
+    pre:has(> code.hljs.bash),
+    pre:has(> code.hljs.shell),
+    pre:has(> code.hljs.zsh) {
+        --lh-lang: 'Shell';
+    }
+    pre:has(> code.hljs.ps1),
+    pre:has(> code.hljs.powershell) {
+        --lh-lang: 'PowerShell';
+    }
+    pre:has(> code.hljs.sql) {
+        --lh-lang: 'SQL';
+    }
+    pre:has(> code.hljs.yaml),
+    pre:has(> code.hljs.yml) {
+        --lh-lang: 'YAML';
+    }
+    pre:has(> code.hljs.diff) {
+        --lh-lang: 'Diff';
+    }
+    pre:has(> code.hljs.md),
+    pre:has(> code.hljs.markdown) {
+        --lh-lang: 'Markdown';
+    }
+    pre:has(> code.hljs.ini),
+    pre:has(> code.hljs.toml) {
+        --lh-lang: 'Config';
+    }
+    pre:has(> code.hljs)::before {
+        content: var(--lh-lang);
+        display: block;
+        padding: 7px 14px 7px 58px;
+        font: 600 11px/1.5 var(--code-font), monospace;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-4);
+        background:
+            radial-gradient(circle at 16px 50%, var(--lh-coral) 0 4px, transparent 4.5px),
+            radial-gradient(circle at 30px 50%, var(--lh-gold) 0 4px, transparent 4.5px),
+            radial-gradient(circle at 44px 50%, var(--lh-teal) 0 4px, transparent 4.5px),
+            rgb(var(--lh-tint) / 0.08);
+        border: 1px solid rgb(var(--lh-tint) / 0.12);
+        border-bottom: none;
+        border-radius: var(--lh-radius-md) var(--lh-radius-md) 0 0;
+    }
+    pre:has(> code.hljs) > code.hljs {
+        border-radius: 0 0 var(--lh-radius-md) var(--lh-radius-md) !important;
+        border: 1px solid rgb(var(--lh-tint) / 0.12) !important;
+        border-top: 1px solid rgb(var(--lh-tint) / 0.06) !important;
+        background: rgb(0 0 0 / 0.18) !important;
+        padding: 12px 14px !important;
+        line-height: 1.6;
+    }
+    .hljs .hljs-keyword, .hljs .hljs-selector-tag, .hljs .hljs-built_in, .hljs .hljs-meta { color: var(--lh-coral) !important; }
+    .hljs .hljs-string, .hljs .hljs-regexp, .hljs .hljs-addition { color: var(--lh-teal) !important; }
+    .hljs .hljs-number, .hljs .hljs-literal, .hljs .hljs-symbol { color: var(--lh-gold) !important; }
+    .hljs .hljs-title, .hljs .hljs-function, .hljs .hljs-section { color: var(--lh-periwinkle) !important; }
+    .hljs .hljs-type, .hljs .hljs-class, .hljs .hljs-attr, .hljs .hljs-attribute, .hljs .hljs-variable { color: var(--lh-2) !important; }
+    .hljs .hljs-comment, .hljs .hljs-quote { color: var(--text-5) !important; font-style: italic; }
+    .hljs .hljs-deletion { color: var(--lh-coral) !important; }
+}
+
+/* ============================================================
+   IMAGE GRIDS
+   ============================================================ */
+.imageWrapper_W6wEGA,
+[class*='mosaicItem_'],
+[class*='visualMediaItemContainer'] {
+    border-radius: var(--lh-radius-md) !important;
+    overflow: hidden;
+}
+[class*='oneByTwoGrid'],
+[class*='twoByOneGrid'],
+[class*='oneByOneGrid'],
+[class*='threeByThreeGrid'],
+[class*='mosaicContainer'] [class*='grid'] {
+    gap: 4px !important;
+}
+@container body style(--lh-motion: on) {
+    .imageWrapper_W6wEGA img {
+        transition: scale 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .imageWrapper_W6wEGA:hover img {
+        scale: 1.025;
+    }
+}
+
+/* ============================================================
+   PROFILE CARDS
+   ============================================================ */
+.outer_P1YEjQ.user-profile-popout {
+    border: 1px solid rgb(var(--lh-tint) / 0.14) !important;
+    box-shadow: 0 30px 70px -20px rgb(0 0 0 / 0.85), 0 0 0 1px rgb(0 0 0 / 0.2) !important;
+}
+.user-profile-popout [class*='role_'],
+.user-profile-popout [class*='rolePill'],
+[class*='userPopout'] [class*='role_'] {
+    border-radius: 999px !important;
+    background: rgb(var(--lh-tint) / 0.08) !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.14) !important;
+    padding-inline: 8px 10px !important;
+}
+.user-profile-popout [class*='roleCircle'],
+.user-profile-popout [class*='roleDot'] {
+    border-radius: 999px !important;
+}
+
+/* ============================================================
+   CARD HOVER GLOW
+   The LighthouseSettings plugin moves this ring into the hovered card and
+   feeds it the cursor position; only the card's edge lights up.
+   ============================================================ */
+.lh-glow-ring {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 6 !important;
+    pointer-events: none !important;
+    box-sizing: border-box;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: radial-gradient(220px circle at var(--lh-mx) var(--lh-my), var(--lh-2), color-mix(in srgb, var(--lh-2) 35%, transparent) 40%, transparent 72%) !important;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.lh-glow-ring.lh-on {
+    opacity: 1;
+}
+.lh-glow-ring::before,
+.lh-glow-ring::after {
+    display: none !important;
+}
+
+/* ============================================================
+   ACCESSIBILITY MODE
+   ============================================================ */
+@container body style(--lh-a11y: on) {
+    :focus-visible {
+        outline: 2px solid var(--lh-2) !important;
+        outline-offset: 2px !important;
+    }
+    .wrapper_TNyK-N .link_TNyK-N {
+        min-height: 40px;
+    }
+    .message_SY_P2T [id^='message-content-'] {
+        line-height: 1.65 !important;
+    }
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}
+
+/* ============================================================
+   SETTINGS WINDOWS (Discord's own, server and channel settings)
+   ============================================================ */
+.sidebar_cR4ic2,
+.sidebarRegionScroller_jnk11m {
+    background-color: var(--lh-base) !important;
+}
+.contentRegion_jnk11m,
+.contentRegionScroller_jnk11m,
+.standardSidebarView_jnk11m {
+    background-color: var(--lh-panel) !important;
+}
+.side_6zZYhF .item_6zZYhF {
+    border-radius: var(--lh-radius-sm) !important;
+    font-weight: 600;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.side_6zZYhF .item_6zZYhF:hover {
+    background-color: rgb(var(--lh-tint) / 0.08) !important;
+}
+.side_6zZYhF .item_6zZYhF.selected_6zZYhF {
+    background: var(--lh-2) !important;
+    color: var(--text-0) !important;
+}
+.side_6zZYhF .item_6zZYhF.selected_6zZYhF * {
+    color: var(--text-0) !important;
+}
+.side_6zZYhF [class*='header_'] {
+    letter-spacing: 0.08em;
+    color: var(--text-5) !important;
+}
+/* inputs and selects become soft rounded fields */
+.contentRegion_jnk11m input[type='text'],
+.contentRegion_jnk11m input[type='search'],
+.contentRegion_jnk11m input[type='email'],
+.contentRegion_jnk11m input:not([type]),
+.contentRegion_jnk11m textarea,
+[role='dialog'] input[type='text'],
+[role='dialog'] textarea {
+    border-radius: var(--lh-radius-sm) !important;
+    background-color: rgb(var(--lh-tint) / 0.06) !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.12) !important;
+}
+.contentRegion_jnk11m input:focus,
+.contentRegion_jnk11m textarea:focus,
+[role='dialog'] input:focus,
+[role='dialog'] textarea:focus {
+    border-color: color-mix(in srgb, var(--lh-2), transparent 40%) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lh-2), transparent 85%);
+}
+
+/* ============================================================
+   DIALOGS, MENUS, TOOLTIPS, PICKERS
+   ============================================================ */
+/* dialogs */
+[role='dialog'][class*='root_'],
+.modal__F9ieB,
+.container_dvN-MP {
+    border-radius: 20px !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.12) !important;
+    box-shadow: 0 40px 100px -24px rgb(0 0 0 / 0.85) !important;
+    overflow: hidden;
+}
+[class*='backdrop_'][style*='opacity'] {
+    background: rgb(4 8 15 / 0.7) !important;
+}
+
+/* right-click menus */
+.menu_M3qk4j {
+    background: var(--lh-raised) !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.14) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 24px 60px -16px rgb(0 0 0 / 0.8) !important;
+    padding: 6px !important;
+}
+.menu_M3qk4j [role^='menuitem'] {
+    border-radius: 9px !important;
+    margin: 1px 0;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+.menu_M3qk4j [role^='menuitem'][class*='focused'] {
+    background: var(--lh-2) !important;
+    color: var(--text-0) !important;
+}
+.menu_M3qk4j [role^='menuitem'][class*='focused'] * {
+    color: var(--text-0) !important;
+}
+.menu_M3qk4j [role^='menuitem'][class*='colorDanger'][class*='focused'] {
+    background: var(--lh-coral) !important;
+}
+.menu_M3qk4j [role='separator'],
+.menu_M3qk4j [class*='separator_'] {
+    border-color: rgb(var(--lh-tint) / 0.1) !important;
+    margin: 4px 6px !important;
+}
+
+/* tooltips */
+.tooltip_ZDdyhE,
+.tooltip_3_v8qp,
+[class*='tooltipPrimary_'] {
+    background: var(--lh-raised) !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.14);
+    border-radius: 10px !important;
+    box-shadow: 0 12px 30px -10px rgb(0 0 0 / 0.75) !important;
+    color: var(--text-1) !important;
+    font-weight: 600;
+}
+[class*='tooltipPointer_'] {
+    border-top-color: var(--lh-raised) !important;
+}
+
+/* emoji / GIF / sticker picker */
+[class*='contentWrapper_']:has(> nav [id$='-picker-tab']),
+div:has(> [id='emoji-picker-tab-panel']),
+div:has(> [id='gif-picker-tab-panel']),
+div:has(> [id='sticker-picker-tab-panel']) {
+    background: var(--lh-raised) !important;
+    border-radius: 18px !important;
+}
+[id$='-picker-tab'] {
+    border-radius: 999px !important;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+[id$='-picker-tab'][aria-selected='true'] {
+    background: var(--lh-2) !important;
+    color: var(--text-0) !important;
+}
+[id='emoji-picker-tab-panel'] [class*='emojiItem_'] {
+    border-radius: 10px !important;
+}
+[id='emoji-picker-tab-panel'] [class*='emojiItemSelected_'],
+[id='emoji-picker-tab-panel'] [class*='emojiItem_']:hover {
+    background: rgb(var(--lh-tint) / 0.14) !important;
+}
+[id='gif-picker-tab-panel'] [class*='result_'],
+[id='gif-picker-tab-panel'] [class*='categoryFade'],
+[id='gif-picker-tab-panel'] [class*='gif_'] {
+    border-radius: 12px !important;
+}
+
+/* ============================================================
+   HOME — friends page as a dashboard
+   ============================================================ */
+[class*='peopleColumn_'] [class*='tabBody_'] {
+    padding-inline: 12px;
+}
+[class*='peopleListItem_'] {
+    margin: 4px 10px !important;
+    padding: 0 12px !important;
+    border-radius: 14px !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.08) !important;
+    background: rgb(var(--lh-tint) / 0.03);
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+[class*='peopleListItem_']:hover,
+[class*='peopleListItem_'][class*='active'] {
+    background: rgb(var(--lh-tint) / 0.08) !important;
+    border-color: rgb(var(--lh-tint) / 0.16) !important;
+}
+[class*='peopleListItem_'] > div {
+    border-top: none !important;
+}
+/* "Active Now" column as a card */
+[class*='nowPlayingColumn_'] {
+    background: transparent !important;
+    border-left: none !important;
+    padding: var(--gap) var(--gap) var(--gap) 0;
+}
+[class*='nowPlayingColumn_'] > div,
+[class*='nowPlayingColumn_'] [class*='scroller'] {
+    background: var(--lh-panel);
+    border-radius: var(--lh-radius-lg);
+    border: 1px solid rgb(var(--lh-tint) / 0.1);
+}
+[class*='nowPlayingColumn_'] [class*='itemCard_'],
+[class*='nowPlayingColumn_'] [class*='card_'] {
+    border-radius: 14px !important;
+    background: rgb(var(--lh-tint) / 0.05) !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.08) !important;
+}
+/* Online / All / Pending tabs as pills */
+[class*='tabBar_'] [role='tab'] {
+    border-radius: 999px !important;
+    padding-inline: 12px !important;
+}
+[class*='tabBar_'] [role='tab'][aria-selected='true'] {
+    background: var(--lh-2) !important;
+    color: var(--text-0) !important;
+}
+/* DM list */
+.channel_zln_tS .interactive_zln_tS {
+    border-radius: var(--lh-radius-sm) !important;
+}
+.channel_zln_tS .interactiveSelected_zln_tS {
+    background: rgb(var(--lh-tint) / 0.12) !important;
+    box-shadow: inset 3px 0 0 var(--lh-2);
+}
+
+/* ============================================================
+   VOICE AND VIDEO CALLS
+   ============================================================ */
+.callContainer_hbKzX7,
+.callContainer_DwQMm_ {
+    border-radius: var(--lh-radius-lg);
+}
+.callContainer_hbKzX7 [class*='tile_'],
+.callContainer_DwQMm_ [class*='tile_'] {
+    border-radius: 16px !important;
+    overflow: hidden;
+    border: 1px solid rgb(var(--lh-tint) / 0.1);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.callContainer_hbKzX7 [class*='tile_'][class*='speaking'],
+.callContainer_hbKzX7 [class*='tile_']:has([class*='speaking']),
+.callContainer_DwQMm_ [class*='tile_']:has([class*='speaking']) {
+    border-color: var(--lh-2) !important;
+    box-shadow: 0 0 0 2px var(--lh-2), 0 0 26px -6px var(--lh-2) !important;
+}
+/* call controls float as a pill */
+.callContainer_hbKzX7 [class*='controlSections_'],
+.callContainer_hbKzX7 [class*='videoControls_'] [class*='wrapper_']:has(> [class*='controlSections']) {
+    background: rgb(10 17 29 / 0.82);
+    border: 1px solid rgb(var(--lh-tint) / 0.14);
+    border-radius: 999px;
+    padding: 6px 10px;
+    box-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.8);
+    backdrop-filter: blur(12px);
+}
+/* speaking ring on people in voice channels in the sidebar */
+[class*='voiceUser'] [class*='avatarSpeaking'] {
+    box-shadow: 0 0 0 2px var(--lh-2) !important;
+}
+
+/* ============================================================
+   FORUM CHANNELS — posts as cards, tags as pills
+   ============================================================ */
+.container_BkGrJJ .mainCard_BkGrJJ {
+    border-radius: 16px !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.1) !important;
+    background: rgb(var(--lh-tint) / 0.035) !important;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.container_BkGrJJ .mainCard_BkGrJJ:hover {
+    border-color: rgb(var(--lh-tint) / 0.22) !important;
+    background: rgb(var(--lh-tint) / 0.07) !important;
+}
+@container body style(--lh-motion: on) {
+    .container_BkGrJJ .mainCard_BkGrJJ:hover {
+        transform: translateY(-1px);
+    }
+}
+.container_BkGrJJ [class*='tag_'],
+.container_BkGrJJ [class*='pill_'] {
+    border-radius: 999px !important;
+    background: rgb(var(--lh-tint) / 0.08) !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.12) !important;
+}
+.container_BkGrJJ [class*='tag_'][class*='selected'],
+.container_BkGrJJ [class*='pill_'][class*='selected'] {
+    background: var(--lh-2) !important;
+    color: var(--text-0) !important;
+    border-color: transparent !important;
+}
+
+/* ============================================================
+   SMALL LEFTOVERS
+   ============================================================ */
+/* "new messages since…" becomes a floating amber pill */
+.newMessagesBar_j9Vvzj {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    width: max-content !important;
+    max-width: calc(100% - 32px);
+    margin-top: 10px;
+    border-radius: 999px !important;
+    padding-inline: 6px !important;
+    background: var(--lh-2) !important;
+    color: var(--text-0) !important;
+    box-shadow: 0 12px 30px -12px rgb(0 0 0 / 0.75);
+}
+.newMessagesBar_j9Vvzj * {
+    color: var(--text-0) !important;
+}
+.newMessagesBar_j9Vvzj .barButtonAlt_j9Vvzj {
+    border-radius: 999px !important;
+}
+/* "you're viewing older messages" / jump to present */
+[class*='jumpToPresentBar_'] {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    width: max-content !important;
+    border-radius: 999px !important;
+    background: var(--lh-raised) !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.16);
+    box-shadow: 0 12px 30px -12px rgb(0 0 0 / 0.75);
+    padding-inline: 8px !important;
+}
+[class*='jumpToPresentBar_'] button {
+    border-radius: 999px !important;
+}
+/* typing dots in the accent */
+.typing_U9Tvvz [class*='dots'] circle,
+.typing_U9Tvvz svg circle {
+    fill: var(--lh-2) !important;
+}
+/* search results */
+.searchResultsWrap_QHVbp3 {
+    border-radius: var(--lh-radius-lg) !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.1);
+    overflow: hidden;
+}
+.searchResultsWrap_QHVbp3 [class*='searchResult_'] {
+    border-radius: 14px !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.08);
+    background: rgb(var(--lh-tint) / 0.03) !important;
+}
+
+/* ============================================================
+   SMALL TOUCHES
+   ============================================================ */
+.item__o8_Xq {
+    background: var(--lh-2) !important;
+}
+.numberBadge_lMvXrQ {
+    background: var(--lh-2) !important;
+    color: var(--text-0) !important;
+}
+::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--lh-tint) / 0.18) !important;
+    border-radius: 999px !important;
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--lh-tint) / 0.3) !important;
+}
+::selection {
+    background: var(--lh-2);
+    color: var(--text-0);
+}
+code, .hljs {
+    font-family: var(--code-font), 'gg mono', monospace;
+}
+
+/* ============================================================
+   SETTINGS WINDOW STYLING
+   ============================================================ */
+.bd-settings-group.collapsible > .bd-settings-group-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--lh-display-font);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-4);
+    transition: color 0.15s ease;
+}
+.bd-settings-group.collapsible > .bd-settings-group-title::before {
+    content: '';
+    order: 2;
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), var(--border-light));
+}
+.bd-settings-group.collapsible > .bd-settings-group-title::after {
+    order: 3;
+}
+.bd-settings-group.collapsible > .bd-settings-group-title:hover,
+.bd-settings-group.collapsible.expanded > .bd-settings-group-title {
+    color: var(--text-1);
+}
+.bd-settings-group.collapsible.expanded > .bd-settings-group-title::before {
+    background: linear-gradient(90deg, var(--lh-2), transparent);
+}
+.bd-switch-checked .bd-switch-body,
+.bd-switch input:checked + .bd-switch-body,
+.bd-switch.bd-switch-checked {
+    background: var(--lh-2) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #app-mount .channelTextArea_z_gUBg:focus-within,
+    li[id^='chat-messages-']:last-of-type .message_SY_P2T,
+    body.lh-focus .chat_z_gUBg {
+        animation: none !important;
+    }
+}

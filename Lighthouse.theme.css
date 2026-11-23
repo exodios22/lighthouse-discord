@@ -1,0 +1,12 @@
+/**
+ * @name Lighthouse
+ * @author exodios22
+ * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, chat bubbles, square avatars, server strip on top. Loads the latest version from GitHub, so it updates on its own. Pair with LighthouseSettings.plugin.js for settings and features.
+ * @version 6.0.0
+ * @source https://github.com/exodios22/lighthouse-discord
+ */
+
+/* The whole theme lives on GitHub and is loaded fresh, so updates arrive without replacing this file. */
+@import url('https://exodios22.github.io/lighthouse-discord/lighthouse.css');
+
+/* Optional: your own overrides go below this line. They win over the theme. */
