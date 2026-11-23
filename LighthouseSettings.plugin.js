@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.3.1
+ * @version 3.3.2
  */
 
 const COLOURWAYS = {
@@ -495,8 +495,9 @@ module.exports = class LighthouseSettings {
     patchContextMenu() {
         safe(() => {
             this.unpatchMsgMenu = BdApi.ContextMenu.patch("message", (tree, props) => {
-                const msg = props && props.message, channel = props && props.channel;
-                if (!this.settings.bookmarks || !msg || !channel || !tree || !tree.props) return;
+                const msg = props && (props.message || (props.target && props.target.message));
+                const channel = (props && props.channel) || (msg && safe(() => BdApi.Webpack.getStore("ChannelStore").getChannel(msg.channel_id)));
+                if (!this.settings.bookmarks || !msg || !msg.id || !channel || !tree || !tree.props) return;
                 const saved = this.bookmarksData.some(b => b.id === msg.id);
                 const item = BdApi.ContextMenu.buildItem({
                     label: saved ? "Remove from Lighthouse bookmarks" : "Save to Lighthouse bookmarks",
@@ -1093,6 +1094,8 @@ module.exports = class LighthouseSettings {
             el("div", {class: "lh-notes-head"}, el("div", null, el("div", {class: "lh-notes-kicker"}, "Notes"), el("div", {class: "lh-notes-title"}, title)), close),
             area,
             el("div", {class: "lh-notes-foot"}, saved));
+        const hdr = safe(() => document.querySelector(".subtitleContainer_z_gUBg").getBoundingClientRect());
+        if (hdr && hdr.bottom > 0) this.notesEl.style.top = `${Math.round(hdr.bottom + 10)}px`;
         document.body.append(this.notesEl);
         requestAnimationFrame(() => area.focus());
     }
