@@ -54,6 +54,19 @@ Right-click it and choose **Run with PowerShell**. To undo, run it with `-Undo`.
 
 `tools/Lighthouse-Launch.ps1` starts Discord with faster settings for its built-in browser engine: drawing on your graphics card, and no background throttling of calls and stages. It changes your Discord shortcuts and start-with-Windows entry only. It doesn't touch Discord's files. Run it with `-Light` to keep background throttling, or `-Undo` to remove it.
 
+## Optimise the Discord app (Windows)
+
+`tools/Lighthouse-Optimise.ps1` speeds up the Discord app itself, without plugins or OpenAsar. It asks before each step:
+
+1. Clears bloated web and shader caches.
+2. Deletes old Discord versions.
+3. Runs Discord on your high-performance graphics card.
+4. Stops Windows power-throttling Discord in the background, so stages and calls don't stutter.
+5. Optionally gives Discord above-normal CPU priority.
+6. Starts Discord with faster browser-engine settings (this includes everything the launch boost does).
+
+Right-click it and choose **Run with PowerShell**. Use `-Undo` to reverse it all. Run it again after a big Discord update.
+
 ## Credits
 
 - Base: [midnight](https://github.com/refact0r/midnight-discord) by refact0r (MIT), loaded remotely.
