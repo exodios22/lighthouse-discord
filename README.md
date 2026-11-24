@@ -8,6 +8,10 @@ A SimForge-style theme for [BetterDiscord](https://betterdiscord.app): deep navy
 |---|---|
 | ![Command palette searching channels, bookmarks and actions](preview/lighthouse-palette.png) | ![Notes panel open beside the chat](preview/lighthouse-notes.png) |
 
+| Leonida colourway | Start-up screens (SimForge, Leonida) |
+|---|---|
+| ![Lighthouse in the Leonida colourway: pink and orange accents on deep indigo](preview/lighthouse-leonida.png) | ![Lighthouse start-up screens with a lighthouse icon and loading bar](preview/startup-screens.png) |
+
 <sub>Previews are mockups with made-up content.</sub>
 
 ## Install

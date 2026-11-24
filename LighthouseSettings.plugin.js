@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.5.0
+ * @version 3.6.0
  */
 
 const COLOURWAYS = {
@@ -37,6 +37,10 @@ const COLOURWAYS = {
     mono: {
         label: "Mono", light: false, swatch: ["#141414", "#ededed", "#9ca3af"],
         vars: {"--lh-1": "#ffffff", "--lh-2": "#ededed", "--lh-4": "#ffffff", "--lh-5": "#cfcfcf", "--lh-b": "#9ca3af", "--lh-on-accent": "#0a0a0a", "--lh-base": "#080808", "--lh-panel": "#141414", "--lh-raised": "#1c1c1c", "--lh-tint": "255 255 255", "--text-1": "#f5f5f5", "--text-2": "#e8e8e8", "--text-3": "#d2d2d2", "--text-4": "#9a9a9a", "--text-5": "#8a8a8a"}
+    },
+    leonida: {
+        label: "Leonida", light: false, swatch: ["#16122b", "#ff5c9d", "#ffa04a"],
+        vars: {"--lh-1": "#ffc6de", "--lh-2": "#ff5c9d", "--lh-4": "#ff7bb1", "--lh-5": "#e8458a", "--lh-b": "#ffa04a", "--lh-on-accent": "#1c0712", "--lh-base": "#0b0918", "--lh-panel": "#16122b", "--lh-raised": "#201a3b", "--lh-tint": "205 160 255", "--text-1": "#f8f2fb", "--text-2": "#ece3f4", "--text-3": "#d8cbe6", "--text-4": "#a596bb", "--text-5": "#9385ab"}
     }
 };
 
@@ -80,6 +84,7 @@ const DEFAULTS = {
     bannerGlow: true,
     calmRoles: true,
     roundWindow: true,
+    splashTheme: true,
     windowRadius: 12,
     healthCheck: true,
     whatsNew: true,
@@ -266,6 +271,8 @@ module.exports = class LighthouseSettings {
         this.updateTimer = setTimeout(() => this.checkForUpdate(false), 15000);
         this.healthTimer = setTimeout(() => this.runHealthCheck(false), 25000);
         this.newsTimer = setTimeout(() => this.showWhatsNew(false), 6000);
+        this.splashTimer = setTimeout(() => this.writeSplash(), 20000);
+        this.splashInterval = setInterval(() => this.writeSplash(), 30000);
     }
 
     stop() {
@@ -284,6 +291,9 @@ module.exports = class LighthouseSettings {
         clearTimeout(this.updateTimer);
         clearTimeout(this.healthTimer);
         clearTimeout(this.newsTimer);
+        clearTimeout(this.splashTimer);
+        clearTimeout(this.splashDebounce);
+        clearInterval(this.splashInterval);
         this.closeNotes();
         this.closeNews();
         document.querySelectorAll('.lh-notes-btn').forEach(n => n.remove());
@@ -413,6 +423,77 @@ module.exports = class LighthouseSettings {
             window.addEventListener("resize", this.onResize);
         }
         this.onResize();
+        clearTimeout(this.splashDebounce);
+        this.splashDebounce = setTimeout(() => this.writeSplash(), 3000);
+    }
+
+    /* ================= start-up screen (via OpenAsar) ================= */
+    splashCss() {
+        const s = this.settings;
+        const way = (COLOURWAYS[s.colourway] || COLOURWAYS.simforge).vars;
+        const c = k => way[k];
+        const display = s.displayFont === "pricedown" ? "'Pricedown Bl', 'Pricedown', 'Anton'"
+            : s.displayFont === "bricolage" ? "'Bricolage Grotesque'" : (FONTS[s.bodyFont] || FONTS.manrope).css;
+        const body = (FONTS[s.bodyFont] || FONTS.manrope).css;
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>`
+            + `<path d='M23 15 32 6l9 9z' fill='${c("--lh-2")}'/>`
+            + `<rect x='25' y='15' width='14' height='9' rx='2' fill='${c("--lh-b")}'/>`
+            + `<rect x='21' y='24' width='22' height='3' rx='1.5' fill='${c("--text-1")}'/>`
+            + `<path d='M25 27h14l4 31H21z' fill='${c("--text-1")}'/>`
+            + `<path d='M24.2 34h15.6l.8 6H23.4zM23 46h18l.8 6H22.2z' fill='${c("--lh-2")}'/>`
+            + `<rect x='29.5' y='51' width='5' height='7' rx='2.5' fill='${c("--lh-base")}'/>`
+            + `<rect x='15' y='58' width='34' height='3' rx='1.5' fill='${c("--text-1")}' opacity='.5'/></svg>`;
+        const icon = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+        const tint = c("--lh-tint");
+        return `@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Anton&family=Manrope:wght@600;700&family=Archivo:wght@600;700&display=swap');
+html, body { background: radial-gradient(130% 90% at 50% 0%, ${c("--lh-raised")} 0%, ${c("--lh-panel")} 45%, ${c("--lh-base")} 100%) !important; }
+body { position: relative; overflow: hidden; }
+video { display: none !important; }
+body::before {
+    content: 'Lighthouse'; display: block; padding-top: 104px; margin-bottom: 16px;
+    background: ${icon} top center / 92px 92px no-repeat;
+    font: 800 30px/1 ${display}, sans-serif; letter-spacing: -.01em; color: ${c("--text-1")};
+    filter: drop-shadow(0 0 22px rgb(from ${c("--lh-b")} r g b / .35));
+    position: relative; z-index: 1;
+}
+body::after {
+    content: ''; position: fixed; left: 50%; top: 96px; width: 560px; height: 560px; margin: -280px 0 0 -280px; z-index: 0; pointer-events: none;
+    background: conic-gradient(from 0deg, transparent 0deg 300deg, rgb(from ${c("--lh-b")} r g b / .0) 300deg, rgb(from ${c("--lh-b")} r g b / .32) 345deg, transparent 360deg);
+    -webkit-mask: radial-gradient(circle, #000 0 8%, rgb(0 0 0 / .6) 30%, transparent 62%);
+    animation: lh-beam 3.2s linear infinite;
+}
+@keyframes lh-beam { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { body::after { animation: none; } }
+#text, body > div:not([id]) {
+    position: relative; z-index: 1; font: 700 12px/1.4 ${body}, sans-serif !important; font-style: normal !important;
+    letter-spacing: .12em; text-transform: uppercase; color: ${c("--text-4")} !important;
+}
+#barContainer { position: relative; z-index: 1; width: 170px !important; height: 6px !important; border-radius: 999px !important; background: rgb(${tint} / .14) !important; overflow: hidden; }
+#barFill { height: 6px !important; border-radius: 999px !important; background: linear-gradient(90deg, ${c("--lh-2")}, ${c("--lh-b")}) !important; box-shadow: 0 0 12px ${c("--lh-2")}; }
+button, [role='button'], #skip, #quit, a {
+    position: relative; z-index: 1; -webkit-app-region: no-drag; cursor: pointer !important;
+    background: rgb(${tint} / .08) !important; color: ${c("--text-3")} !important; border: 1px solid rgb(${tint} / .16) !important;
+    border-radius: 999px !important; padding: 4px 12px !important; font: 700 11px ${body}, sans-serif !important; text-decoration: none !important;
+}
+button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { background: ${c("--lh-2")} !important; color: ${c("--lh-on-accent")} !important; border-color: transparent !important; }
+#debug { color: ${c("--text-5")} !important; z-index: 1; }`;
+    }
+
+    async writeSplash() {
+        const cache = safe(() => window.DiscordNative.userDataCache);
+        if (!cache || typeof cache.getCached !== "function" || typeof cache.cacheUserData !== "function") return;
+        try {
+            const cached = (await cache.getCached()) || {};
+            if (!this.settings.splashTheme) {
+                if (cached.lighthouseSplash) { delete cached.openasarSplashCSS; delete cached.lighthouseSplash; cache.cacheUserData(JSON.stringify(cached)); }
+                return;
+            }
+            const css = this.splashCss();
+            if (cached.openasarSplashCSS === css) return;
+            cached.openasarSplashCSS = css;
+            cached.lighthouseSplash = true;
+            cache.cacheUserData(JSON.stringify(cached));
+        } catch (e) { /* splash theming is a nice-to-have */ }
     }
 
     /* ================= your own messages ================= */
@@ -1480,6 +1561,7 @@ module.exports = class LighthouseSettings {
                     {type: "switch", id: "colourDot", name: "Colourway dot", note: "A small dot in the title bar that opens a quick colourway picker.", value: s.colourDot},
                     {type: "switch", id: "nowPlaying", name: "Now playing", note: "Shows your current Spotify song as a small pill in the title bar while it plays.", value: s.nowPlaying},
                     {type: "switch", id: "spotifyControls", name: "Spotify buttons", note: "Previous, play/pause and next on the now-playing pill. Spotify only allows this with Premium.", value: s.spotifyControls},
+                    {type: "switch", id: "splashTheme", name: "Lighthouse start-up screen", note: "Themes the loading window Discord shows while it starts, in your colourway. Needs OpenAsar (the Lighthouse tune-up script installs it). Shows from the next start.", value: s.splashTheme},
                     {type: "switch", id: "roundWindow", name: "Rounded window corners", note: "Rounds the corners of the whole Discord window. For see-through corners, also turn on BetterDiscord's window transparency setting (Settings → BetterDiscord → Settings → Window) and restart Discord. Corners stay square while the window is maximised.", value: s.roundWindow},
                     {type: "slider", id: "windowRadius", name: "Window corner size", value: s.windowRadius, min: 4, max: 24, step: 1, units: "px", markers: [4, 8, 12, 16, 20, 24]},
                     {type: "dropdown", id: "winButtons", name: "Window buttons", value: s.winButtons, options: [

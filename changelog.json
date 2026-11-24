@@ -1,6 +1,16 @@
 {
   "entries": [
     {
+      "id": "2026-11-24-a",
+      "version": "3.6.0",
+      "date": "24 Nov 2026",
+      "title": "Leonida and a start-up screen",
+      "items": [
+        "New colourway: Leonida, sunset pink and orange over deep indigo.",
+        "Lighthouse start-up screen: a lighthouse with a sweeping beam, in your colourway and heading font. Needs OpenAsar (the tune-up script installs it)."
+      ]
+    },
+    {
       "id": "2026-11-23-d",
       "version": "3.5.0",
       "date": "23 Nov 2026",
