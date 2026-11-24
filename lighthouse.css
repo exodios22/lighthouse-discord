@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.7.0
+ * @version 5.8.0
  */
 
 /*
@@ -406,7 +406,7 @@ body,
 }
 @container body style(--lh-motion: on) {
     #app-mount .channelTextArea_z_gUBg:focus-within {
-        animation: lh-spin 4s linear infinite;
+        animation: lh-spin 1.2s cubic-bezier(.2,.8,.2,1) 1;
     }
 }
 @keyframes lh-spin {
@@ -456,16 +456,20 @@ body,
         .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N::after {
             content: '';
             position: absolute;
-            inset: 0;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: calc(100% + 90px);
             z-index: -1;
             pointer-events: none;
             background: linear-gradient(90deg, var(--lh-2), var(--lh-b), var(--lh-2));
             -webkit-mask: var(--lh-wave) 0 0 / 90px 100% repeat-x;
             mask: var(--lh-wave) 0 0 / 90px 100% repeat-x;
+            will-change: transform;
         }
         .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N::before {
             opacity: .5;
-            transform: translateY(-3px);
+            top: -3px;
         }
         .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N::after {
             top: 6px;
@@ -482,8 +486,8 @@ body,
         }
     }
 }
-@keyframes lh-wave { to { -webkit-mask-position: 90px 0; mask-position: 90px 0; } }
-@keyframes lh-wave-back { to { -webkit-mask-position: -90px 0; mask-position: -90px 0; } }
+@keyframes lh-wave { from { transform: translateX(-90px); } to { transform: translateX(0); } }
+@keyframes lh-wave-back { from { transform: translateX(0); } to { transform: translateX(-90px); } }
 @keyframes lh-fill-in { from { translate: 0 100%; } }
 .unread_TNyK-N {
     background: var(--lh-2);
@@ -1116,9 +1120,8 @@ body.lh-focus .page_pog62O {
 
 /* emoji / GIF / sticker picker */
 [class*='contentWrapper_']:has(> nav [id$='-picker-tab']),
-div:has(> [id='emoji-picker-tab-panel']),
-div:has(> [id='gif-picker-tab-panel']),
-div:has(> [id='sticker-picker-tab-panel']) {
+[class*='positionContainer_'] [class*='contentWrapper_'],
+[class*='drawerSizingWrapper_'] [class*='contentWrapper_'] {
     background: var(--lh-raised) !important;
     border-radius: 18px !important;
 }
