@@ -1,6 +1,16 @@
 {
   "entries": [
     {
+      "id": "2026-11-24-b",
+      "version": "3.7.0",
+      "date": "24 Nov 2026",
+      "title": "Liquid channel",
+      "items": [
+        "The channel you're in now fills with a rolling wave in your accent colours, rising in when you switch channels.",
+        "Prefer the old look? Layout → Selected channel look → Solid."
+      ]
+    },
+    {
       "id": "2026-11-24-a",
       "version": "3.6.0",
       "date": "24 Nov 2026",

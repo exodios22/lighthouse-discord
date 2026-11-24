@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.6.0
+ * @version 3.7.0
  */
 
 const COLOURWAYS = {
@@ -99,6 +99,7 @@ const DEFAULTS = {
     codeBlocks: true,
     serverBar: "top",
     filledChannel: true,
+    channelStyle: "liquid",
     gap: 12,
     avatarRadius: 26,
     panelRadius: 18,
@@ -385,6 +386,7 @@ module.exports = class LighthouseSettings {
             "--lh-server-bar": s.serverBar,
             "--lh-bubbles": onOff(s.bubbles),
             "--lh-filled-channel": onOff(s.filledChannel),
+            "--lh-channel-style": s.channelStyle === "solid" ? "solid" : "liquid",
             "--lh-dash-header": onOff(s.dashHeader),
             "--lh-collapse": onOff(s.collapse),
             "--lh-compact": onOff(s.compact),
@@ -1606,6 +1608,7 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
                 settings: [
                     {type: "dropdown", id: "serverBar", name: "Server list", value: s.serverBar, options: [{label: "Strip across the top", value: "top"}, {label: "Rail on the left (Discord default)", value: "side"}]},
                     {type: "switch", id: "filledChannel", name: "Accent pill for the selected channel", value: s.filledChannel},
+                    {type: "dropdown", id: "channelStyle", name: "Selected channel look", note: "Liquid fills the channel you're in with a rolling wave in your accent colours. Solid is a plain filled pill.", value: s.channelStyle, options: [{label: "Liquid (animated wave)", value: "liquid"}, {label: "Solid", value: "solid"}]},
                     {type: "slider", id: "gap", name: "Space between panels", min: 4, max: 24, step: 1, units: "px", value: s.gap, markers: [4, 12, 24]}
                 ]
             },

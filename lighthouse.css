@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.6.0
+ * @version 5.7.0
  */
 
 /*
@@ -23,6 +23,7 @@ body {
     --lh-server-bar: top;         /* top | side */
     --lh-bubbles: on;             /* on | off */
     --lh-filled-channel: on;      /* on | off */
+    --lh-channel-style: liquid;   /* liquid | solid — selected channel look */
     --lh-dash-header: on;         /* on | off — big SimForge-style channel header */
     --lh-collapse: off;           /* on | off — channel and member lists shrink to slim rails, open on hover */
     --lh-motion: on;              /* on | off */
@@ -167,6 +168,7 @@ body,
 @property --lh-server-bar { syntax: 'top | side'; inherits: false; initial-value: top; }
 @property --lh-bubbles { syntax: 'off | on'; inherits: false; initial-value: on; }
 @property --lh-filled-channel { syntax: 'off | on'; inherits: false; initial-value: on; }
+@property --lh-channel-style { syntax: 'liquid | solid'; inherits: false; initial-value: liquid; }
 @property --lh-dash-header { syntax: 'off | on'; inherits: false; initial-value: on; }
 @property --lh-collapse { syntax: 'off | on'; inherits: false; initial-value: off; }
 @property --lh-motion { syntax: 'off | on'; inherits: false; initial-value: on; }
@@ -434,6 +436,55 @@ body,
         color: var(--text-0) !important;
     }
 }
+/* Liquid: the selected channel fills with a rolling wave in your accent colours */
+@container body style(--lh-filled-channel: on) {
+    @container body style(--lh-channel-style: liquid) {
+        .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N {
+            --lh-wave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 38' preserveAspectRatio='none'%3E%3Cpath d='M0 14Q25 6 50 14T100 14V38H0Z'/%3E%3C/svg%3E");
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+            background: var(--lh-raised) !important;
+            color: var(--text-1) !important;
+            box-shadow: inset 0 0 0 1px rgb(var(--lh-tint) / .14), 0 8px 22px -14px var(--lh-2);
+        }
+        .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N *,
+        .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N svg {
+            color: var(--text-1) !important;
+        }
+        .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N::before,
+        .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background: linear-gradient(90deg, var(--lh-2), var(--lh-b), var(--lh-2));
+            -webkit-mask: var(--lh-wave) 0 0 / 90px 100% repeat-x;
+            mask: var(--lh-wave) 0 0 / 90px 100% repeat-x;
+        }
+        .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N::before {
+            opacity: .5;
+            transform: translateY(-3px);
+        }
+        .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N::after {
+            top: 6px;
+        }
+    }
+}
+@container body style(--lh-motion: on) {
+    @container body style(--lh-channel-style: liquid) {
+        .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N::after {
+            animation: lh-wave 3s linear infinite, lh-fill-in .7s cubic-bezier(.2,.8,.2,1);
+        }
+        .wrapper_TNyK-N[class*='modeSelected'] .link_TNyK-N::before {
+            animation: lh-wave-back 4.5s linear infinite, lh-fill-in .9s cubic-bezier(.2,.8,.2,1);
+        }
+    }
+}
+@keyframes lh-wave { to { -webkit-mask-position: 90px 0; mask-position: 90px 0; } }
+@keyframes lh-wave-back { to { -webkit-mask-position: -90px 0; mask-position: -90px 0; } }
+@keyframes lh-fill-in { from { translate: 0 100%; } }
 .unread_TNyK-N {
     background: var(--lh-2);
 }
