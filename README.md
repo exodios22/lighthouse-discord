@@ -23,6 +23,18 @@ The theme file is a small loader. It pulls `lighthouse.css` from this repo's Git
 - **Look:** SimForge navy and amber, floating cards, dashboard channel header, modern title bar, chat bubbles, square avatars, editor-style code blocks, restyled settings, menus, tooltips, pickers, friends page, calls and forums.
 - **Plugin features:** matching icon set, channel notes, message bookmarks, Spotify buttons, shareable setup codes, breakage alerts, what's-new card, command palette (Ctrl+K), focus mode (Ctrl+Shift+F), shortcut sheet (Ctrl+Shift+/), title bar search pill, colourway dot and quick picker, now-playing pill, server overview card, unread pill, friend request banner, auto-collapsing sidebars, per-server, per-channel and time-of-day accents, card edge glow, settings profiles, accessibility mode, 8 colourways including the Daylight light mode.
 
+## LighthouseBoost (optional)
+
+A separate plugin that makes Discord lighter. It works with any theme.
+
+- Pauses animations and chat GIFs while Discord is in the background. Calls, streams and stages keep playing.
+- Frees memory when you've been away for a while.
+- Turns off frosted-glass blur, the most expensive effect to draw.
+- Optional: no animations, skip drawing off-screen messages, hide shop and upsells, hide Active Now.
+- Shows Discord's memory use and frame rate, with a "Free memory now" button.
+
+Install it like the main plugin: put `LighthouseBoost.plugin.js` in your plugins folder and turn it on.
+
 ## Credits
 
 - Base: [midnight](https://github.com/refact0r/midnight-discord) by refact0r (MIT), loaded remotely.
