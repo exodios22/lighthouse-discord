@@ -60,7 +60,9 @@ Right-click it and choose **Run with PowerShell**. To undo, run it with `-Undo`.
 3. Optionally turns off main-process crash reporting, using Discord's own off switch.
 4. Runs Discord on your high-performance GPU, stops Windows power-throttling it, and can give it above-normal CPU priority.
 
-Right-click it and choose **Run with PowerShell**. Use `-Undo` to reverse everything. LighthouseBoost can also turn on the settings from step 1 for you, under "Discord app tuning".
+Right-click it and choose **Run with PowerShell**. Use `-Undo` to reverse everything.
+
+Discord's web app writes its own experiment values over the start-up settings each time it connects, so use **LighthouseBoost 2.2+** too. Under "Discord's own speed experiments", it switches on Discord's matching performance experiments: faster start-up caches, lighter calls (no audio-delay analysis during silence), lighter gaming, lazy-loaded images, simpler typing dots and faster animations. It uses session-only overrides, which aren't saved to Discord's servers and aren't reported back.
 
 ## Credits
 

@@ -22,6 +22,10 @@
     5. Optional: above-normal CPU priority for Discord (needs administrator).
     6. Optional: clears Discord's web download cache if it has grown past 500 MB, and deletes old versions.
 
+  Note: Discord's web app writes its experiment values back into the DESKTOP_TTI_* settings every time it
+  connects, which turns the cache settings off again. LighthouseBoost (2.2+) fixes that by switching on Discord's
+  own matching experiments, so use both together.
+
   Run it:   right-click > Run with PowerShell
   Undo it:  powershell -ExecutionPolicy Bypass -File Lighthouse-Optimise.ps1 -Undo
 #>

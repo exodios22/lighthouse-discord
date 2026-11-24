@@ -2,7 +2,7 @@
  * @name LighthouseBoost
  * @author Lighthouse
  * @description Makes Discord faster: freezes animated profile cosmetics, collapses huge stage audiences, unloads the member list in giant servers, cuts layout work in chat, pauses everything in the background, frees memory, and measures lag. Works with any theme.
- * @version 2.1.0
+ * @version 2.2.0
  * @source https://github.com/exodios22/lighthouse-discord
  */
 
@@ -30,6 +30,13 @@ const DEFAULTS = {
     keepShaderCache: true,
     fastGameScan: true,
     quietVoiceLog: true,
+    xpStartupCaches: true,
+    xpVoiceCpu: true,
+    xpGamePerf: true,
+    xpLazyImages: true,
+    xpTypingDots: true,
+    xpRivePerf: true,
+    xpNativeMarkdown: false,
     autoUpdate: true
 };
 
@@ -40,6 +47,19 @@ const APP_TUNING = {
     fastGameScan: {key: "DESKTOP_PROCESS_POLLING_PERF", on: true, off: false},
     quietVoiceLog: {key: "debugLogging", on: false, off: true}
 };
+
+/* Discord's own performance experiments (found in its web app). Switched on with session-only overrides:
+   not saved to Discord's servers and not reported back, re-applied each time Discord connects. */
+const EXPERIMENTS = {
+    xpStartupCaches: [["2026-04-desktop-tti-v8-cache", 1], ["2026-09-desktop-tti-shader-cache", 1]],
+    xpVoiceCpu: [["2026-10-desktop-general-perf", 1]],
+    xpGamePerf: [["2026-10-desktop-game-perf", 1]],
+    xpLazyImages: [["2026-02-lazy-load-all-images", 2]],
+    xpTypingDots: [["2026-07-typing-users-css-dots", 1]],
+    xpRivePerf: [["2026-08-rive-web-perf", 1]],
+    xpNativeMarkdown: [["2025-04-native-markdown", 1]]
+};
+const REAPPLY_ON = ["POST_CONNECTION_OPEN", "CONNECTION_OPEN_STATE_UPDATE", "APEX_EXPERIMENTS_FETCH_SUCCESS"];
 
 const safe = fn => { try { return fn(); } catch (e) { return undefined; } };
 const native = () => safe(() => window.DiscordNative && window.DiscordNative.processUtils);
@@ -130,6 +150,7 @@ module.exports = class LighthouseBoost {
         window.addEventListener("popstate", this.onPop);
 
         this.applyAppTuning();
+        this.startExperiments();
 
         if (this.settings.autoUpdate) this.updateTimer = setTimeout(() => this.checkForUpdate(false), 20000);
     }
@@ -146,6 +167,7 @@ module.exports = class LighthouseBoost {
         if (this.observer) this.observer.disconnect();
         if (this.longTaskObserver) this.longTaskObserver.disconnect();
         clearInterval(this.navTimer);
+        this.stopExperiments();
         if (this.origPush) { history.pushState = this.origPush; history.replaceState = this.origReplace; }
         window.removeEventListener("popstate", this.onPop);
         this.api.DOM.removeStyle(STYLE_ID);
@@ -154,6 +176,7 @@ module.exports = class LighthouseBoost {
     save() {
         this.api.Data.save("settings", this.settings);
         this.applyAppTuning();
+        this.applyExperiments();
         this.applyClasses();
         this.scheduleBackground();
         this.stageCollapsed = false;
@@ -201,6 +224,51 @@ module.exports = class LighthouseBoost {
             this.pausedVideos.forEach(v => { if (v.isConnected) safe(() => v.play().catch(() => {})); });
             this.pausedVideos.clear();
         }
+    }
+
+    /* ================= Discord's own speed experiments ================= */
+    dispatcher() {
+        return this._dispatcher || (this._dispatcher = safe(() => BdApi.Webpack.getByKeys("dispatch", "subscribe", "unsubscribe")));
+    }
+
+    startExperiments() {
+        const d = this.dispatcher();
+        if (!d) return;
+        this.onReapply = () => { clearTimeout(this.xpTimer); this.xpTimer = setTimeout(() => this.applyExperiments(), 600); };
+        for (const t of REAPPLY_ON) safe(() => d.subscribe(t, this.onReapply));
+        this.applyExperiments();
+    }
+
+    stopExperiments() {
+        const d = this.dispatcher();
+        clearTimeout(this.xpTimer);
+        if (!d) return;
+        for (const t of REAPPLY_ON) safe(() => d.unsubscribe(t, this.onReapply));
+        for (const list of Object.values(EXPERIMENTS)) for (const [name] of list)
+            safe(() => d.dispatch({type: "APEX_EXPERIMENT_SESSION_OVERRIDE_DELETE", experimentName: name}));
+    }
+
+    applyExperiments() {
+        const d = this.dispatcher();
+        const store = safe(() => BdApi.Webpack.getStore("ApexExperimentStore"));
+        if (!d || !store) return;
+        const registered = safe(() => store.getRegisteredExperiments()) || {};
+        const session = safe(() => store.getSessionOverrides()) || {};
+        for (const [id, list] of Object.entries(EXPERIMENTS)) for (const [name, variant] of list) {
+            if (Object.keys(registered).length && !registered[name]) continue;
+            const have = session[name] && session[name].variantId;
+            if (this.settings[id] && have !== variant) safe(() => d.dispatch({type: "APEX_EXPERIMENT_SESSION_OVERRIDE_CREATE", experimentName: name, variantId: variant}));
+            else if (!this.settings[id] && have != null) safe(() => d.dispatch({type: "APEX_EXPERIMENT_SESSION_OVERRIDE_DELETE", experimentName: name}));
+        }
+    }
+
+    experimentState() {
+        const store = safe(() => BdApi.Webpack.getStore("ApexExperimentStore"));
+        if (!store) return null;
+        const session = safe(() => store.getSessionOverrides()) || {};
+        let want = 0, on = 0;
+        for (const [id, list] of Object.entries(EXPERIMENTS)) if (this.settings[id]) for (const [name, variant] of list) { want++; if (session[name] && session[name].variantId === variant) on++; }
+        return {want, on};
     }
 
     /* ================= app tuning: Discord's own desktop settings ================= */
@@ -430,6 +498,7 @@ module.exports = class LighthouseBoost {
             h("span", {style: stat}, "Freezes (last min): ", h("b", null, `${lag.freezes}`), lag.worst ? ` · worst ${Math.round(lag.worst)} ms` : ""),
             h("span", {style: stat}, "Last channel switch: ", h("b", null, lag.lastSwitch != null ? `${lag.lastSwitch} ms` : "switch channel to measure")),
             h("span", {style: stat}, "Launch boost: ", h("b", null, boost === null ? "can't tell" : boost ? "on" : "off")),
+            h("span", {style: stat}, "Speed experiments: ", h("b", null, (() => { const x = this.experimentState(); return x ? `${x.on} of ${x.want} on` : "unavailable"; })())),
             h("span", {style: stat}, "App tuning: ", h("b", null, (() => { const st = this.appTuningState(); const ok = Object.entries(APP_TUNING).filter(([id, t]) => st[id] === (this.settings[id] ? t.on : t.off)).length; return st.keepCodeCache === undefined ? "unavailable" : `${ok} of ${Object.keys(APP_TUNING).length} set`; })())),
             h("button", {type: "button", style: btn, onClick: () => this.freeMemory(true).then(() => setTimeout(() => setMem(this.memoryKB()), 1600))}, "Free memory now"));
     }
@@ -451,6 +520,18 @@ module.exports = class LighthouseBoost {
                         {type: "switch", id: "bigServerMembers", name: "Unload member list in giant servers", note: "In servers bigger than the size below, the member list is switched off (using Discord's own button), so it stops processing thousands of status changes. It comes back in smaller servers.", value: s.bigServerMembers},
                         {type: "slider", id: "memberThreshold", name: "Giant server size", min: 1000, max: 200000, step: 1000, value: s.memberThreshold, markers: [1000, 20000, 50000, 100000, 200000]},
                         {type: "switch", id: "quietMembers", name: "Simple member list", note: "Hides game activity lines and nameplates in the member list.", value: s.quietMembers}
+                    ]
+                },
+                {
+                    type: "category", id: "experiments", name: "Discord's own speed experiments", collapsible: true, shown: true,
+                    settings: [
+                        {type: "switch", id: "xpStartupCaches", name: "Faster start-up (keep code and shader caches)", note: "Discord's experiments 2026-04-desktop-tti-v8-cache and 2026-09-desktop-tti-shader-cache. Without these, Discord writes 'clear the caches' back into its settings every time it connects, undoing any manual tweak.", value: s.xpStartupCaches},
+                        {type: "switch", id: "xpVoiceCpu", name: "Lighter calls and stages", note: "2026-10-desktop-general-perf: the voice engine skips audio-delay analysis during silence, game detection uses the cheaper scan, and the log file stays open instead of being reopened for every line.", value: s.xpVoiceCpu},
+                        {type: "switch", id: "xpGamePerf", name: "Lighter while gaming", note: "2026-10-desktop-game-perf: native CPU stats, the overlay only animates itself and pauses hidden voice waves, popups over fullscreen games are occluded, notification icons drawn on a cheap canvas.", value: s.xpGamePerf},
+                        {type: "switch", id: "xpLazyImages", name: "Lazy-load every image", note: "2026-02-lazy-load-all-images: images in chat load only when they're about to scroll into view, so busy channels open faster.", value: s.xpLazyImages},
+                        {type: "switch", id: "xpTypingDots", name: "Simple typing dots", note: "2026-07-typing-users-css-dots: the 'is typing' dots are drawn with plain CSS instead of an animation player.", value: s.xpTypingDots},
+                        {type: "switch", id: "xpRivePerf", name: "Faster animated graphics", note: "2026-08-rive-web-perf: Discord's performance fixes for its Rive animation player.", value: s.xpRivePerf},
+                        {type: "switch", id: "xpNativeMarkdown", name: "Native message formatting (experimental)", note: "2025-04-native-markdown: formats messages with Discord's new native parser instead of the JavaScript one. Faster, but still in testing; turn off if formatting looks wrong.", value: s.xpNativeMarkdown}
                     ]
                 },
                 {
