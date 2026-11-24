@@ -2,7 +2,7 @@
  * @name LighthouseBoost
  * @author Lighthouse
  * @description Makes Discord faster: freezes animated profile cosmetics, collapses huge stage audiences, unloads the member list in giant servers, cuts layout work in chat, pauses everything in the background, frees memory, and measures lag. Works with any theme.
- * @version 2.3.0
+ * @version 2.4.0
  * @source https://github.com/exodios22/lighthouse-discord
  */
 
@@ -233,6 +233,7 @@ module.exports = class LighthouseBoost {
 
     /* ================= gateway + dispatcher ================= */
     startDispatcherPatches() {
+        if (this.patchActive()) return;
         const d = this.dispatcher();
         if (!d) return;
         // 1. Big servers: don't ask Discord to stream every member's activity changes.
@@ -279,7 +280,12 @@ module.exports = class LighthouseBoost {
         return this._dispatcher || (this._dispatcher = safe(() => BdApi.Webpack.getByKeys("dispatch", "subscribe", "unsubscribe")));
     }
 
+    patchActive() {
+        return !!(window.__lighthousePatch && window.__lighthousePatch.applied);
+    }
+
     startExperiments() {
+        if (this.patchActive()) return;
         const d = this.dispatcher();
         if (!d) return;
         this.onReapply = () => { clearTimeout(this.xpTimer); this.xpTimer = setTimeout(() => this.applyExperiments(), 600); };
@@ -297,6 +303,7 @@ module.exports = class LighthouseBoost {
     }
 
     applyExperiments() {
+        if (this.patchActive()) return;
         const d = this.dispatcher();
         const store = safe(() => BdApi.Webpack.getStore("ApexExperimentStore"));
         if (!d || !store) return;
@@ -546,6 +553,7 @@ module.exports = class LighthouseBoost {
             h("span", {style: stat}, "Freezes (last min): ", h("b", null, `${lag.freezes}`), lag.worst ? ` · worst ${Math.round(lag.worst)} ms` : ""),
             h("span", {style: stat}, "Last channel switch: ", h("b", null, lag.lastSwitch != null ? `${lag.lastSwitch} ms` : "switch channel to measure")),
             h("span", {style: stat}, "Launch boost: ", h("b", null, boost === null ? "can't tell" : boost ? "on" : "off")),
+            h("span", {style: stat}, "Lighthouse Patch: ", h("b", null, this.patchActive() ? `active (${window.__lighthousePatch.applied.join(", ")})` : "not installed")),
             h("span", {style: stat}, "Speed experiments: ", h("b", null, (() => { const x = this.experimentState(); return x ? `${x.on} of ${x.want} on` : "unavailable"; })())),
             h("span", {style: stat}, "App tuning: ", h("b", null, (() => { const st = this.appTuningState(); const ok = Object.entries(APP_TUNING).filter(([id, t]) => st[id] === (this.settings[id] ? t.on : t.off)).length; return st.keepCodeCache === undefined ? "unavailable" : `${ok} of ${Object.keys(APP_TUNING).length} set`; })())),
             h("button", {type: "button", style: btn, onClick: () => this.freeMemory(true).then(() => setTimeout(() => setMem(this.memoryKB()), 1600))}, "Free memory now"));
