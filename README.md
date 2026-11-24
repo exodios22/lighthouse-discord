@@ -50,22 +50,17 @@ Install it like the main plugin: put `LighthouseBoost.plugin.js` in your plugins
 
 Right-click it and choose **Run with PowerShell**. To undo, run it with `-Undo`. Run it again after a big Discord update.
 
-## Launch boost (Windows, optional)
-
-`tools/Lighthouse-Launch.ps1` starts Discord with faster settings for its built-in browser engine: drawing on your graphics card, and no background throttling of calls and stages. It changes your Discord shortcuts and start-with-Windows entry only. It doesn't touch Discord's files. Run it with `-Light` to keep background throttling, or `-Undo` to remove it.
 
 ## Optimise the Discord app (Windows)
 
-`tools/Lighthouse-Optimise.ps1` speeds up the Discord app itself, without plugins or OpenAsar. It asks before each step:
+`tools/Lighthouse-Optimise.ps1` speeds up the Discord app itself. It's built from reverse engineering Discord's desktop bootstrap. It doesn't use plugins or OpenAsar, and it doesn't modify Discord's program files:
 
-1. Clears bloated web and shader caches.
-2. Deletes old Discord versions.
-3. Runs Discord on your high-performance graphics card.
-4. Stops Windows power-throttling Discord in the background, so stages and calls don't stutter.
-5. Optionally gives Discord above-normal CPU priority.
-6. Starts Discord with faster browser-engine settings (this includes everything the launch boost does).
+1. Turns on Discord's own hidden start-up settings. Out of the box, Discord wipes its compiled-code cache and its GPU shader cache on every launch. It also uses an older, more expensive game-detection scan and writes voice debug logs during every call.
+2. Adds GPU drawing switches through Discord's own `chromiumSwitches` setting, so they apply however Discord is started.
+3. Optionally turns off main-process crash reporting, using Discord's own off switch.
+4. Runs Discord on your high-performance GPU, stops Windows power-throttling it, and can give it above-normal CPU priority.
 
-Right-click it and choose **Run with PowerShell**. Use `-Undo` to reverse it all. Run it again after a big Discord update.
+Right-click it and choose **Run with PowerShell**. Use `-Undo` to reverse everything. LighthouseBoost can also turn on the settings from step 1 for you, under "Discord app tuning".
 
 ## Credits
 

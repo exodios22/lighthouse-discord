@@ -2,7 +2,7 @@
  * @name LighthouseBoost
  * @author Lighthouse
  * @description Makes Discord faster: freezes animated profile cosmetics, collapses huge stage audiences, unloads the member list in giant servers, cuts layout work in chat, pauses everything in the background, frees memory, and measures lag. Works with any theme.
- * @version 2.0.0
+ * @version 2.1.0
  * @source https://github.com/exodios22/lighthouse-discord
  */
 
@@ -26,7 +26,19 @@ const DEFAULTS = {
     bigServerMembers: false,
     memberThreshold: 20000,
     quietMembers: false,
+    keepCodeCache: true,
+    keepShaderCache: true,
+    fastGameScan: true,
+    quietVoiceLog: true,
     autoUpdate: true
+};
+
+/* Discord's own start-up settings (found in its desktop bootstrap). The app is allowed to set these itself. */
+const APP_TUNING = {
+    keepCodeCache: {key: "DESKTOP_TTI_REMOVE_V8_CACHE_CLEAR", on: true, off: false},
+    keepShaderCache: {key: "DESKTOP_TTI_REMOVE_SHADER_CACHE_CLEAR", on: true, off: false},
+    fastGameScan: {key: "DESKTOP_PROCESS_POLLING_PERF", on: true, off: false},
+    quietVoiceLog: {key: "debugLogging", on: false, off: true}
 };
 
 const safe = fn => { try { return fn(); } catch (e) { return undefined; } };
@@ -117,6 +129,8 @@ module.exports = class LighthouseBoost {
         this.onPop = () => this.onNavigate();
         window.addEventListener("popstate", this.onPop);
 
+        this.applyAppTuning();
+
         if (this.settings.autoUpdate) this.updateTimer = setTimeout(() => this.checkForUpdate(false), 20000);
     }
 
@@ -139,6 +153,7 @@ module.exports = class LighthouseBoost {
 
     save() {
         this.api.Data.save("settings", this.settings);
+        this.applyAppTuning();
         this.applyClasses();
         this.scheduleBackground();
         this.stageCollapsed = false;
@@ -186,6 +201,32 @@ module.exports = class LighthouseBoost {
             this.pausedVideos.forEach(v => { if (v.isConnected) safe(() => v.play().catch(() => {})); });
             this.pausedVideos.clear();
         }
+    }
+
+    /* ================= app tuning: Discord's own desktop settings ================= */
+    appSettingsApi() {
+        return safe(() => window.DiscordNative.settings) || null;
+    }
+
+    appTuningState() {
+        const api = this.appSettingsApi();
+        const out = {};
+        for (const [id, t] of Object.entries(APP_TUNING)) out[id] = api ? safe(() => api.getSync(t.key, t.off)) : undefined;
+        return out;
+    }
+
+    async applyAppTuning() {
+        const api = this.appSettingsApi();
+        if (!api || typeof api.set !== "function") return false;
+        let changed = false;
+        for (const [id, t] of Object.entries(APP_TUNING)) {
+            const want = this.settings[id] ? t.on : t.off;
+            const have = safe(() => api.getSync(t.key, t.off));
+            if (have !== want) {
+                try { await api.set(t.key, want); changed = true; } catch (e) { /* key not allowed in this Discord version */ }
+            }
+        }
+        return changed;
     }
 
     /* ================= deep: cosmetics, chat, stages, member list ================= */
@@ -389,6 +430,7 @@ module.exports = class LighthouseBoost {
             h("span", {style: stat}, "Freezes (last min): ", h("b", null, `${lag.freezes}`), lag.worst ? ` · worst ${Math.round(lag.worst)} ms` : ""),
             h("span", {style: stat}, "Last channel switch: ", h("b", null, lag.lastSwitch != null ? `${lag.lastSwitch} ms` : "switch channel to measure")),
             h("span", {style: stat}, "Launch boost: ", h("b", null, boost === null ? "can't tell" : boost ? "on" : "off")),
+            h("span", {style: stat}, "App tuning: ", h("b", null, (() => { const st = this.appTuningState(); const ok = Object.entries(APP_TUNING).filter(([id, t]) => st[id] === (this.settings[id] ? t.on : t.off)).length; return st.keepCodeCache === undefined ? "unavailable" : `${ok} of ${Object.keys(APP_TUNING).length} set`; })())),
             h("button", {type: "button", style: btn, onClick: () => this.freeMemory(true).then(() => setTimeout(() => setMem(this.memoryKB()), 1600))}, "Free memory now"));
     }
 
@@ -409,6 +451,15 @@ module.exports = class LighthouseBoost {
                         {type: "switch", id: "bigServerMembers", name: "Unload member list in giant servers", note: "In servers bigger than the size below, the member list is switched off (using Discord's own button), so it stops processing thousands of status changes. It comes back in smaller servers.", value: s.bigServerMembers},
                         {type: "slider", id: "memberThreshold", name: "Giant server size", min: 1000, max: 200000, step: 1000, value: s.memberThreshold, markers: [1000, 20000, 50000, 100000, 200000]},
                         {type: "switch", id: "quietMembers", name: "Simple member list", note: "Hides game activity lines and nameplates in the member list.", value: s.quietMembers}
+                    ]
+                },
+                {
+                    type: "category", id: "app", name: "Discord app tuning (takes effect next start)", collapsible: true, shown: true,
+                    settings: [
+                        {type: "switch", id: "keepCodeCache", name: "Keep compiled code between starts", note: "Out of the box, Discord deletes its compiled JavaScript cache every time it starts, so it recompiles its whole app on each launch. This stops that, for a faster start. (Discord's own hidden setting DESKTOP_TTI_REMOVE_V8_CACHE_CLEAR.)", value: s.keepCodeCache},
+                        {type: "switch", id: "keepShaderCache", name: "Keep graphics shaders between starts", note: "Discord also wipes its GPU shader cache on every start, which causes stutter for the first minute while shaders recompile. This keeps them. (DESKTOP_TTI_REMOVE_SHADER_CACHE_CLEAR.)", value: s.keepShaderCache},
+                        {type: "switch", id: "fastGameScan", name: "Faster game detection", note: "Uses Discord's newer, cheaper way of scanning running programs for games. (DESKTOP_PROCESS_POLLING_PERF.)", value: s.fastGameScan},
+                        {type: "switch", id: "quietVoiceLog", name: "Turn off voice debug logging", note: "Discord's voice engine writes a debug log during every call and stage by default. This switches it off. (debugLogging.)", value: s.quietVoiceLog}
                     ]
                 },
                 {
