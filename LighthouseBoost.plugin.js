@@ -1,8 +1,8 @@
 /**
  * @name LighthouseBoost
  * @author Lighthouse
- * @description Makes Discord lighter: pauses animations and GIFs while Discord is in the background, frees memory when you're away, turns off costly blur effects, and can hide clutter. Works with any theme.
- * @version 1.0.0
+ * @description Makes Discord faster: freezes animated profile cosmetics, collapses huge stage audiences, unloads the member list in giant servers, cuts layout work in chat, pauses everything in the background, frees memory, and measures lag. Works with any theme.
+ * @version 2.0.0
  * @source https://github.com/exodios22/lighthouse-discord
  */
 
@@ -19,6 +19,13 @@ const DEFAULTS = {
     smartRendering: false,
     hideClutter: false,
     hideActiveNow: false,
+    staticCosmetics: true,
+    containChat: true,
+    stageLite: true,
+    stageThreshold: 150,
+    bigServerMembers: false,
+    memberThreshold: 20000,
+    quietMembers: false,
     autoUpdate: true
 };
 
@@ -63,7 +70,19 @@ html.lb-tidy [class*='nowPlayingColumn_'] [class*='upsell'], html.lb-tidy [class
     display: none !important;
 }`,
     activeNow: `
-html.lb-no-active-now [class*='nowPlayingColumn_'] { display: none !important; }`
+html.lb-no-active-now [class*='nowPlayingColumn_'] { display: none !important; }`,
+    cosmetics: `
+html.lb-static [class*='usernameGradient' i], html.lb-static [class*='gradientText' i], html.lb-static [class*='holographic' i],
+html.lb-static [class*='roleStyle' i], html.lb-static [class*='clanTag' i] * {
+    animation: none !important;
+}
+html.lb-static [class*='profileEffects' i] { display: none !important; }`,
+    contain: `
+html.lb-contain li[id^='chat-messages-'] { contain: layout style; }
+html.lb-contain [class*='members_'] [class*='member_'], html.lb-contain .container_86es0b [role='listitem'] { contain: layout style; }`,
+    quietMembers: `
+html.lb-quiet-members .container_86es0b [class*='activity' i],
+html.lb-quiet-members .container_86es0b [class*='nameplate_'] { display: none !important; }`
 };
 
 module.exports = class LighthouseBoost {
@@ -84,6 +103,20 @@ module.exports = class LighthouseBoost {
         window.addEventListener("focus", this.onVisibility);
         this.scheduleBackground();
 
+        this.lag = {tasks: [], lastSwitch: null};
+        this.watchLongTasks();
+        this.observer = new MutationObserver(muts => this.onMutations(muts));
+        this.observer.observe(document.body, {childList: true, subtree: true});
+        this.lastPath = location.pathname;
+        this.navTimer = setInterval(() => this.onNavigate(), 400);
+        this.origPush = history.pushState;
+        this.origReplace = history.replaceState;
+        const self = this;
+        history.pushState = function (...a) { const r = self.origPush.apply(this, a); self.onNavigate(); return r; };
+        history.replaceState = function (...a) { const r = self.origReplace.apply(this, a); self.onNavigate(); return r; };
+        this.onPop = () => this.onNavigate();
+        window.addEventListener("popstate", this.onPop);
+
         if (this.settings.autoUpdate) this.updateTimer = setTimeout(() => this.checkForUpdate(false), 20000);
     }
 
@@ -95,7 +128,12 @@ module.exports = class LighthouseBoost {
         clearTimeout(this.memTimer);
         clearTimeout(this.updateTimer);
         this.setBackground(false);
-        document.documentElement.classList.remove("lb-paused", "lb-lite", "lb-still", "lb-smart", "lb-tidy", "lb-no-active-now");
+        document.documentElement.classList.remove("lb-paused", "lb-lite", "lb-still", "lb-smart", "lb-tidy", "lb-no-active-now", "lb-static", "lb-contain", "lb-quiet-members");
+        if (this.observer) this.observer.disconnect();
+        if (this.longTaskObserver) this.longTaskObserver.disconnect();
+        clearInterval(this.navTimer);
+        if (this.origPush) { history.pushState = this.origPush; history.replaceState = this.origReplace; }
+        window.removeEventListener("popstate", this.onPop);
         this.api.DOM.removeStyle(STYLE_ID);
     }
 
@@ -103,6 +141,8 @@ module.exports = class LighthouseBoost {
         this.api.Data.save("settings", this.settings);
         this.applyClasses();
         this.scheduleBackground();
+        this.stageCollapsed = false;
+        this.checkMemberList();
     }
 
     applyClasses() {
@@ -112,6 +152,9 @@ module.exports = class LighthouseBoost {
         c.toggle("lb-smart", s.smartRendering);
         c.toggle("lb-tidy", s.hideClutter);
         c.toggle("lb-no-active-now", s.hideActiveNow);
+        c.toggle("lb-static", s.staticCosmetics);
+        c.toggle("lb-contain", s.containChat);
+        c.toggle("lb-quiet-members", s.quietMembers);
     }
 
     /* ================= background mode ================= */
@@ -143,6 +186,121 @@ module.exports = class LighthouseBoost {
             this.pausedVideos.forEach(v => { if (v.isConnected) safe(() => v.play().catch(() => {})); });
             this.pausedVideos.clear();
         }
+    }
+
+    /* ================= deep: cosmetics, chat, stages, member list ================= */
+    onMutations(muts) {
+        if (!this.settings.staticCosmetics) return;
+        this.pending = this.pending || [];
+        for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) this.pending.push(n);
+        if (this.pendingScheduled) return;
+        this.pendingScheduled = true;
+        const run = () => {
+            const nodes = this.pending; this.pending = []; this.pendingScheduled = false;
+            for (const n of nodes) {
+                if (!n.isConnected) continue;
+                if (n.tagName === "IMG" || n.tagName === "VIDEO") this.calmMedia(n);
+                else if (n.firstElementChild) n.querySelectorAll("img[src*='avatar-decoration'], [class*='nameplate'] video, video[src*='nameplate']").forEach(x => this.calmMedia(x));
+            }
+        };
+        (window.requestIdleCallback || (f => setTimeout(f, 50)))(run, {timeout: 300});
+    }
+
+    calmMedia(el) {
+        if (el.tagName === "IMG") {
+            const src = el.getAttribute("src") || "";
+            if (src.includes("avatar-decoration") && src.includes("passthrough=true")) el.setAttribute("src", src.replace("passthrough=true", "passthrough=false"));
+        } else if (el.tagName === "VIDEO" && !el.closest(CALL_AREA)) {
+            const src = el.getAttribute("src") || (el.querySelector("source") && el.querySelector("source").getAttribute("src")) || "";
+            if (src.includes("nameplate") || el.closest("[class*='nameplate']")) {
+                el.autoplay = false; el.loop = false; el.preload = "metadata";
+                safe(() => el.pause());
+                el.addEventListener("play", () => { if (this.settings.staticCosmetics && !el.matches(":hover")) safe(() => el.pause()); });
+            }
+        }
+    }
+
+    onNavigate() {
+        const path = location.pathname;
+        if (path !== this.lastPath) {
+            this.lastPath = path;
+            this.timeSwitch(path);
+            this.stageCollapsed = false;
+            this.checkMemberList();
+        }
+        if (this.settings.stageLite && !this.stageCollapsed) this.checkStage();
+    }
+
+    timeSwitch(path) {
+        const parts = path.split("/");
+        if (parts[1] !== "channels" || !parts[3]) return;
+        const id = parts[3], t0 = performance.now();
+        const wait = () => {
+            if (document.querySelector(`li[id^='chat-messages-${id}-']`)) { this.lag.lastSwitch = Math.round(performance.now() - t0); return; }
+            if (performance.now() - t0 < 5000) requestAnimationFrame(wait);
+        };
+        requestAnimationFrame(wait);
+    }
+
+    checkStage() {
+        const now = Date.now();
+        if (this.lastStageScan && now - this.lastStageScan < 1200) return;
+        this.lastStageScan = now;
+        const header = [...document.querySelectorAll("h2, h3, [role='heading']")]
+            .find(h => /^\s*Audience\s*[—–-]\s*([\d,]+)/i.test(h.textContent || "") && h.textContent.length < 40);
+        if (!header) return;
+        const count = parseInt(header.textContent.replace(/[^\d]/g, ""), 10) || 0;
+        if (count < this.settings.stageThreshold) { this.stageCollapsed = true; return; }
+        const scope = header.closest("[class*='header' i]") || header.parentElement;
+        const toggle = scope && (scope.querySelector("[aria-expanded='true']") || (scope.matches("[aria-expanded='true']") ? scope : null));
+        if (toggle) {
+            toggle.click();
+            this.stageCollapsed = true;
+            BdApi.UI.showToast(`Collapsed the stage audience (${count.toLocaleString()} people) to keep things smooth. Click it to open.`, {type: "info"});
+        }
+    }
+
+    checkMemberList() {
+        if (!this.settings.bigServerMembers) {
+            if (this.hidMembers) this.toggleMembers(true);
+            return;
+        }
+        const guildId = location.pathname.split("/")[2];
+        const count = safe(() => BdApi.Webpack.getStore("GuildMemberCountStore").getMemberCount(guildId)) || 0;
+        setTimeout(() => {
+            if (count >= this.settings.memberThreshold) this.toggleMembers(false);
+            else if (this.hidMembers) this.toggleMembers(true);
+        }, 600);
+    }
+
+    toggleMembers(show) {
+        const btn = document.querySelector(show ? "[aria-label='Show Member List' i]" : "[aria-label='Hide Member List' i]");
+        if (!btn) return;
+        btn.click();
+        this.hidMembers = !show;
+    }
+
+    watchLongTasks() {
+        safe(() => {
+            this.longTaskObserver = new PerformanceObserver(list => {
+                const now = performance.now();
+                for (const e of list.getEntries()) this.lag.tasks.push({at: now, ms: e.duration});
+                this.lag.tasks = this.lag.tasks.filter(t => now - t.at < 60000);
+            });
+            this.longTaskObserver.observe({type: "longtask", buffered: false});
+        });
+    }
+
+    lagSummary() {
+        const now = performance.now();
+        const recent = (this.lag && this.lag.tasks || []).filter(t => now - t.at < 60000);
+        return {freezes: recent.length, worst: recent.reduce((a, t) => Math.max(a, t.ms), 0), lastSwitch: this.lag && this.lag.lastSwitch};
+    }
+
+    launchBoost() {
+        const argv = safe(() => window.DiscordNative.processUtils.getMainArgvSync()) || [];
+        if (!Array.isArray(argv) || !argv.length) return null;
+        return argv.some(a => String(a).includes("enable-gpu-rasterization"));
     }
 
     /* ================= memory ================= */
@@ -223,9 +381,14 @@ module.exports = class LighthouseBoost {
         const box = {display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center", width: "100%"};
         const stat = {padding: "8px 12px", borderRadius: "10px", background: "rgb(140 170 220 / .08)", border: "1px solid rgb(140 170 220 / .14)", color: "var(--text-normal, #e3e9f2)", fontSize: "13px"};
         const btn = {padding: "8px 14px", borderRadius: "10px", border: "none", cursor: "pointer", fontWeight: 700, background: "var(--lh-2, var(--brand-500, #5865f2))", color: "var(--lh-on-accent, #fff)"};
+        const lag = this.lagSummary();
+        const boost = this.launchBoost();
         return h("div", {style: box},
             h("span", {style: stat}, "Memory: ", h("b", null, mem ? mb(mem) : "unknown")),
             h("span", {style: stat}, "Frame rate: ", h("b", null, fps ? `${fps} fps` : "…")),
+            h("span", {style: stat}, "Freezes (last min): ", h("b", null, `${lag.freezes}`), lag.worst ? ` · worst ${Math.round(lag.worst)} ms` : ""),
+            h("span", {style: stat}, "Last channel switch: ", h("b", null, lag.lastSwitch != null ? `${lag.lastSwitch} ms` : "switch channel to measure")),
+            h("span", {style: stat}, "Launch boost: ", h("b", null, boost === null ? "can't tell" : boost ? "on" : "off")),
             h("button", {type: "button", style: btn, onClick: () => this.freeMemory(true).then(() => setTimeout(() => setMem(this.memoryKB()), 1600))}, "Free memory now"));
     }
 
@@ -235,7 +398,19 @@ module.exports = class LighthouseBoost {
         const Stats = () => this.Stats();
         return BdApi.UI.buildSettingsPanel({
             settings: [
-                {type: "custom", id: "stats", name: "Right now", note: "Memory is the main Discord window. Frame rate is measured while this window is open.", children: React.createElement(Stats)},
+                {type: "custom", id: "stats", name: "Right now", note: "Freezes are moments Discord was stuck for over 50 ms (the stutter you feel). Lower is better. Launch boost shows whether Discord was started with the Lighthouse launch script.", children: React.createElement(Stats)},
+                {
+                    type: "category", id: "deep", name: "Deep optimisations", collapsible: true, shown: true,
+                    settings: [
+                        {type: "switch", id: "staticCosmetics", name: "Freeze animated profile cosmetics", note: "Avatar decorations show a still frame, nameplate videos stop playing (they play on hover), and animated role-colour effects stand still. Busy member lists and chats get much lighter.", value: s.staticCosmetics},
+                        {type: "switch", id: "containChat", name: "Cheaper chat layout", note: "Tells the browser engine each message and member row can be laid out on its own, so new messages and presence updates don't re-measure the whole list.", value: s.containChat},
+                        {type: "switch", id: "stageLite", name: "Collapse big stage audiences", note: "When you join a stage with a big audience, its audience grid starts collapsed, so Discord doesn't draw thousands of avatars. Click the Audience header to open it.", value: s.stageLite},
+                        {type: "slider", id: "stageThreshold", name: "Collapse audiences bigger than", min: 50, max: 2000, step: 50, value: s.stageThreshold, markers: [50, 150, 500, 1000, 2000]},
+                        {type: "switch", id: "bigServerMembers", name: "Unload member list in giant servers", note: "In servers bigger than the size below, the member list is switched off (using Discord's own button), so it stops processing thousands of status changes. It comes back in smaller servers.", value: s.bigServerMembers},
+                        {type: "slider", id: "memberThreshold", name: "Giant server size", min: 1000, max: 200000, step: 1000, value: s.memberThreshold, markers: [1000, 20000, 50000, 100000, 200000]},
+                        {type: "switch", id: "quietMembers", name: "Simple member list", note: "Hides game activity lines and nameplates in the member list.", value: s.quietMembers}
+                    ]
+                },
                 {
                     type: "category", id: "background", name: "When Discord is in the background", collapsible: true, shown: true,
                     settings: [

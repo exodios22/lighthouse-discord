@@ -35,7 +35,8 @@ A separate plugin that makes Discord lighter. It works with any theme.
 - Frees memory when you've been away for a while.
 - Turns off frosted-glass blur, the most expensive effect to draw.
 - Optional: no animations, skip drawing off-screen messages, hide shop and upsells, hide Active Now.
-- Shows Discord's memory use and frame rate, with a "Free memory now" button.
+- Deep optimisations: freezes animated profile cosmetics, cheaper chat and member-list layout, collapses huge stage audiences, and can unload the member list in giant servers.
+- Lag meter: memory, frame rate, freezes per minute and channel-switch time, plus a "Free memory now" button.
 
 Install it like the main plugin: put `LighthouseBoost.plugin.js` in your plugins folder and turn it on.
 
@@ -48,6 +49,10 @@ Install it like the main plugin: put `LighthouseBoost.plugin.js` in your plugins
 - Offers to delete old Discord versions left on disk.
 
 Right-click it and choose **Run with PowerShell**. To undo, run it with `-Undo`. Run it again after a big Discord update.
+
+## Launch boost (Windows, optional)
+
+`tools/Lighthouse-Launch.ps1` starts Discord with faster settings for its built-in browser engine: drawing on your graphics card, and no background throttling of calls and stages. It changes your Discord shortcuts and start-with-Windows entry only. It doesn't touch Discord's files. Run it with `-Light` to keep background throttling, or `-Undo` to remove it.
 
 ## Credits
 
