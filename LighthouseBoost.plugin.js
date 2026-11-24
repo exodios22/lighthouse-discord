@@ -2,7 +2,7 @@
  * @name LighthouseBoost
  * @author Lighthouse
  * @description Makes Discord faster: freezes animated profile cosmetics, collapses huge stage audiences, unloads the member list in giant servers, cuts layout work in chat, pauses everything in the background, frees memory, and measures lag. Works with any theme.
- * @version 2.2.0
+ * @version 2.3.0
  * @source https://github.com/exodios22/lighthouse-discord
  */
 
@@ -37,6 +37,9 @@ const DEFAULTS = {
     xpTypingDots: true,
     xpRivePerf: true,
     xpNativeMarkdown: false,
+    quietBigServers: true,
+    quietThreshold: 5000,
+    leanDispatcher: true,
     autoUpdate: true
 };
 
@@ -151,6 +154,7 @@ module.exports = class LighthouseBoost {
 
         this.applyAppTuning();
         this.startExperiments();
+        this.startDispatcherPatches();
 
         if (this.settings.autoUpdate) this.updateTimer = setTimeout(() => this.checkForUpdate(false), 20000);
     }
@@ -168,6 +172,7 @@ module.exports = class LighthouseBoost {
         if (this.longTaskObserver) this.longTaskObserver.disconnect();
         clearInterval(this.navTimer);
         this.stopExperiments();
+        this.stopDispatcherPatches();
         if (this.origPush) { history.pushState = this.origPush; history.replaceState = this.origReplace; }
         window.removeEventListener("popstate", this.onPop);
         this.api.DOM.removeStyle(STYLE_ID);
@@ -224,6 +229,49 @@ module.exports = class LighthouseBoost {
             this.pausedVideos.forEach(v => { if (v.isConnected) safe(() => v.play().catch(() => {})); });
             this.pausedVideos.clear();
         }
+    }
+
+    /* ================= gateway + dispatcher ================= */
+    startDispatcherPatches() {
+        const d = this.dispatcher();
+        if (!d) return;
+        // 1. Big servers: don't ask Discord to stream every member's activity changes.
+        this.interceptor = action => {
+            if (action && action.type === "GUILD_SUBSCRIPTIONS_FLUSH" && this.settings.quietBigServers && action.subscriptions) {
+                const counts = safe(() => BdApi.Webpack.getStore("GuildMemberCountStore"));
+                for (const [guildId, sub] of Object.entries(action.subscriptions)) {
+                    const n = safe(() => counts.getMemberCount(guildId)) || 0;
+                    if (sub && sub.activities && n >= this.settings.quietThreshold) {
+                        sub.activities = false;
+                        this.quietedGuilds = (this.quietedGuilds || new Set()).add(guildId);
+                    }
+                }
+            }
+            return false;
+        };
+        safe(() => d.addInterceptor(this.interceptor));
+        // 2. Lean action logger: Discord times every store handler for every event and fires a trace event
+        //    for each, even though nothing reads it outside the first seconds of start-up or developer mode.
+        const logger = d.actionLogger;
+        if (logger && typeof logger.log === "function" && !this.origLog) {
+            this.origLog = logger.log;
+            const orig = this.origLog, self = this;
+            logger.log = function (action, run) {
+                if (!self.settings.leanDispatcher || this.persist || performance.now() < 20000) return orig.call(this, action, run);
+                const entry = {name: action.type, action, totalTime: 0, traces: []};
+                run((name, fn) => fn());
+                return entry;
+            };
+        }
+    }
+
+    stopDispatcherPatches() {
+        const d = this.dispatcher();
+        if (!d) return;
+        if (this.interceptor && Array.isArray(d._interceptors)) d._interceptors = d._interceptors.filter(f => f !== this.interceptor);
+        if (this.origLog && d.actionLogger) d.actionLogger.log = this.origLog;
+        this.origLog = null;
+        this.interceptor = null;
     }
 
     /* ================= Discord's own speed experiments ================= */
@@ -519,6 +567,9 @@ module.exports = class LighthouseBoost {
                         {type: "slider", id: "stageThreshold", name: "Collapse audiences bigger than", min: 50, max: 2000, step: 50, value: s.stageThreshold, markers: [50, 150, 500, 1000, 2000]},
                         {type: "switch", id: "bigServerMembers", name: "Unload member list in giant servers", note: "In servers bigger than the size below, the member list is switched off (using Discord's own button), so it stops processing thousands of status changes. It comes back in smaller servers.", value: s.bigServerMembers},
                         {type: "slider", id: "memberThreshold", name: "Giant server size", min: 1000, max: 200000, step: 1000, value: s.memberThreshold, markers: [1000, 20000, 50000, 100000, 200000]},
+                        {type: "switch", id: "quietBigServers", name: "Calm giant servers", note: "In servers bigger than the size below, Discord stops streaming every member's game and activity changes to you, which is a constant flood in big servers. Messages, typing, voice, the member list and online status still work; activity lines just update less often. Takes effect the next time you open each server.", value: s.quietBigServers},
+                        {type: "slider", id: "quietThreshold", name: "Calm servers bigger than", min: 500, max: 100000, step: 500, value: s.quietThreshold, markers: [500, 5000, 20000, 50000, 100000]},
+                        {type: "switch", id: "leanDispatcher", name: "Lean event processing", note: "Discord times every internal handler for every event it processes and announces each timing, even though nothing uses it. This skips that bookkeeping (Discord's own developer mode is left alone).", value: s.leanDispatcher},
                         {type: "switch", id: "quietMembers", name: "Simple member list", note: "Hides game activity lines and nameplates in the member list.", value: s.quietMembers}
                     ]
                 },
