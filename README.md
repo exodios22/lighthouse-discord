@@ -35,6 +35,16 @@ A separate plugin that makes Discord lighter. It works with any theme.
 
 Install it like the main plugin: put `LighthouseBoost.plugin.js` in your plugins folder and turn it on.
 
+## Tune-up script (Windows, optional)
+
+`tools/Lighthouse-Tuneup.ps1` speeds up the Discord app itself:
+
+- Installs [OpenAsar](https://github.com/GooseMod/OpenAsar), an open-source rewrite of Discord's start-up layer, with its performance mode on. It keeps your original file as a backup.
+- Sets Windows to run Discord on your high-performance graphics card.
+- Offers to delete old Discord versions left on disk.
+
+Right-click it and choose **Run with PowerShell**. To undo, run it with `-Undo`. Run it again after a big Discord update.
+
 ## Credits
 
 - Base: [midnight](https://github.com/refact0r/midnight-discord) by refact0r (MIT), loaded remotely.
