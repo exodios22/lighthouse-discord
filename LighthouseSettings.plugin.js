@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.7.0
+ * @version 3.8.0
  */
 
 const COLOURWAYS = {
@@ -301,6 +301,8 @@ module.exports = class LighthouseSettings {
         safe(() => this.unpatchMsgMenu && this.unpatchMsgMenu());
         const sl = document.querySelector('.sidebarList_pog62O'); if (sl) sl.style.removeProperty('--lh-banner');
         this.glowRing = null;
+        this.glowSpot = null;
+        this.glowRect = null;
         this.lastGuild = this.lastChannel = undefined;
     }
 
@@ -690,17 +692,25 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
         this.glowFrame = requestAnimationFrame(() => {
             this.glowFrame = null;
             const card = target && target.closest ? target.closest(GLOW_TARGETS) : null;
-            if (!this.glowRing) this.glowRing = el("div", {class: "lh-glow-ring", "aria-hidden": "true"});
+            if (!this.glowRing) {
+                this.glowRing = el("div", {class: "lh-glow-ring", "aria-hidden": "true"});
+                this.glowSpot = el("div", {class: "lh-glow-spot"});
+                this.glowRing.append(this.glowSpot);
+            }
             const ring = this.glowRing;
             if (!card) { ring.classList.remove("lh-on"); return; }
+            const now = performance.now();
             if (ring.parentElement !== card) {
                 ring.classList.remove("lh-on");
                 if (getComputedStyle(card).position === "static") card.style.position = "relative";
                 card.append(ring);
+                this.glowRect = null;
             }
-            const r = card.getBoundingClientRect();
-            ring.style.setProperty("--lh-mx", `${Math.round(x - r.left)}px`);
-            ring.style.setProperty("--lh-my", `${Math.round(y - r.top)}px`);
+            // perf: read the card's position on entry and at most every 0.5 s, not on every frame, so a hover
+            // that just changed styles doesn't force a full layout each time the mouse moves
+            if (!this.glowRect || now - this.glowRectAt > 500) { this.glowRect = card.getBoundingClientRect(); this.glowRectAt = now; }
+            const r = this.glowRect;
+            this.glowSpot.style.transform = `translate3d(${Math.round(x - r.left)}px, ${Math.round(y - r.top)}px, 0)`;
             ring.classList.add("lh-on");
         });
     }

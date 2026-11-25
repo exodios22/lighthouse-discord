@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "2026-11-25-a",
+      "version": "3.8.0",
+      "date": "25 Nov 2026",
+      "title": "Smoother hovering",
+      "items": [
+        "The card glow now follows your cursor without repainting the whole chat, and no longer forces a layout on every mouse move. It looks exactly the same.",
+        "The collapsible channel list and member list now open instantly instead of animating their width, which re-laid-out every row on every frame.",
+        "Panel cards only animate their border colour on hover, not their large shadows."
+      ]
+    },
+    {
       "id": "2026-11-24-b",
       "version": "3.7.0",
       "date": "24 Nov 2026",

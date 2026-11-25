@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.8.0
+ * @version 5.9.0
  */
 
 /*
@@ -329,7 +329,8 @@ body,
 .messagesWrapper_8AE1Qq,
 .container_86es0b,
 .subtitleContainer_z_gUBg {
-    transition: border-color var(--border-hover-transition), box-shadow var(--border-hover-transition), width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+    /* perf: only the border colour animates; animating big blurred shadows or width repaints/relayouts every frame */
+    transition: border-color var(--border-hover-transition);
     box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.035) inset, 0 18px 40px -24px rgb(0 0 0 / 0.8);
 }
 .panels_pog62O {
@@ -688,7 +689,9 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
     .sidebar_pog62O .panels_pog62O {
         flex: none;
         width: 76px !important;
-        transition: width 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.24s ease;
+        /* perf: expand instantly. Animating width re-lays-out every channel row on every frame (~15 frames
+           each time the mouse crosses the rail), which was the worst hover lag. */
+        contain: layout style;
         overflow: hidden;
     }
     .sidebar_pog62O:hover .sidebarList_pog62O,
@@ -705,7 +708,8 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
     .container_86es0b {
         width: 64px !important;
         min-width: 64px !important;
-        transition: width 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.24s ease;
+        /* perf: expand instantly instead of animating width (relayout of every member row per frame) */
+        contain: layout style;
         position: relative;
         z-index: 20;
     }
@@ -951,14 +955,28 @@ body.lh-focus .page_pog62O {
     box-sizing: border-box;
     border-radius: inherit;
     padding: 1.5px;
-    background: radial-gradient(220px circle at var(--lh-mx) var(--lh-my), var(--lh-2), color-mix(in srgb, var(--lh-2) 35%, transparent) 40%, transparent 72%) !important;
+    overflow: hidden;
+    /* perf: the mask never changes; the light is a separate spot moved with transform, so following the
+       cursor costs no repaint (the old version repainted a gradient the size of the whole chat every frame) */
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
     opacity: 0;
     transition: opacity 0.3s ease;
+    will-change: opacity;
 }
 .lh-glow-ring.lh-on {
     opacity: 1;
+}
+.lh-glow-spot {
+    position: absolute;
+    left: -220px;
+    top: -220px;
+    width: 440px;
+    height: 440px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(closest-side, var(--lh-2), color-mix(in srgb, var(--lh-2) 35%, transparent) 40%, transparent 72%);
+    will-change: transform;
 }
 .lh-glow-ring::before,
 .lh-glow-ring::after {
