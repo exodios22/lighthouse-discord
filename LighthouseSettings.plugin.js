@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.9.0
+ * @version 3.10.0
  */
 
 const COLOURWAYS = {
@@ -98,6 +98,7 @@ const DEFAULTS = {
     tintOwn: true,
     codeBlocks: true,
     serverBar: "top",
+    topBar: "onebar",
     filledChannel: true,
     channelStyle: "liquid",
     gap: 12,
@@ -389,6 +390,7 @@ module.exports = class LighthouseSettings {
 
         const body = {
             "--lh-server-bar": s.serverBar,
+            "--lh-topbar": ["classic", "onebar", "beacon"].includes(s.topBar) ? s.topBar : "onebar",
             "--lh-bubbles": onOff(s.bubbles),
             "--lh-filled-channel": onOff(s.filledChannel),
             "--lh-channel-style": s.channelStyle === "solid" ? "solid" : "liquid",
@@ -1290,6 +1292,7 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
             toggle("time-of-day accent", "timeOfDay"),
             toggle("accessibility mode", "a11y"),
             toggle("animations", "motion"),
+            {group: "Lighthouse", icon: ICONS.bolt, label: "Top bar: next layout (one bar / beacon rail / classic)", run: () => this.set("topBar", {onebar: "beacon", beacon: "classic", classic: "onebar"}[s.topBar] || "onebar")},
             {group: "Lighthouse", icon: ICONS.bolt, label: s.serverBar === "top" ? "Move servers to the left rail" : "Move servers to the top strip", run: () => this.set("serverBar", s.serverBar === "top" ? "side" : "top")}
         );
         for (const [id, way] of Object.entries(COLOURWAYS)) {
@@ -1590,6 +1593,7 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
                 type: "category", id: "layout", name: "Layout", collapsible: true, shown: false,
                 settings: [
                     {type: "dropdown", id: "serverBar", name: "Server list", value: s.serverBar, options: [{label: "Strip across the top", value: "top"}, {label: "Rail on the left (Discord default)", value: "side"}]},
+                    {type: "dropdown", id: "topBar", name: "Top bar", note: "How the top of the app is laid out when the server list is across the top.", value: s.topBar, options: [{label: "One bar: servers inside the title bar", value: "onebar"}, {label: "Beacon rail: small servers with a glow, big channel title", value: "beacon"}, {label: "Classic: title bar and server strip as two rows", value: "classic"}]},
                     {type: "switch", id: "filledChannel", name: "Accent pill for the selected channel", value: s.filledChannel},
                     {type: "dropdown", id: "channelStyle", name: "Selected channel look", note: "Liquid fills the channel you're in with a rolling wave in your accent colours. Solid is a plain filled pill.", value: s.channelStyle, options: [{label: "Liquid (animated wave)", value: "liquid"}, {label: "Solid", value: "solid"}]},
                     {type: "slider", id: "gap", name: "Space between panels", min: 4, max: 24, step: 1, units: "px", value: s.gap, markers: [4, 12, 24]}

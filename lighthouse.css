@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.11.0
+ * @version 5.12.0
  */
 
 /*
@@ -21,6 +21,7 @@
 body {
     /* layout */
     --lh-server-bar: top;         /* top | side */
+    --lh-topbar: onebar;          /* classic | onebar | beacon — top layout (server strip on top only) */
     --lh-bubbles: on;             /* on | off */
     --lh-filled-channel: on;      /* on | off */
     --lh-channel-style: liquid;   /* liquid | solid — selected channel look */
@@ -170,6 +171,7 @@ body,
 @property --lh-filled-channel { syntax: 'off | on'; inherits: false; initial-value: on; }
 @property --lh-channel-style { syntax: 'liquid | solid'; inherits: false; initial-value: liquid; }
 @property --lh-dash-header { syntax: 'off | on'; inherits: false; initial-value: on; }
+@property --lh-topbar { syntax: 'classic | onebar | beacon'; inherits: false; initial-value: onebar; }
 @property --lh-collapse { syntax: 'off | on'; inherits: false; initial-value: off; }
 @property --lh-motion { syntax: 'off | on'; inherits: false; initial-value: on; }
 @property --lh-compact { syntax: 'off | on'; inherits: false; initial-value: off; }
@@ -639,6 +641,101 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
     }
     .listItem_rwEpIL:hover .wrapper_JJ-hgR {
         scale: 1.07;
+    }
+}
+
+/* ============================================================
+   TOP LAYOUTS (server strip on top only)
+   onebar: the server strip lives inside the title bar, between
+           back/forward and the search pill; one row instead of two.
+   beacon: a slimmer rail of smaller icons in the title bar with a
+           glowing beam under the server you're in, and a big
+           banner-style channel header.
+   classic: the title bar and the server strip as separate rows.
+   ============================================================ */
+@container body style(--lh-server-bar: top) {
+    @container body style(--lh-topbar: onebar) {
+        #app-mount {
+            --top-bar-height: 52px;
+            --custom-app-top-bar-height: 52px;
+            --lh-strip: 0px;
+            --lh-rail-start: 96px;
+            --lh-rail-scale: 0.75;
+            --custom-channel-header-height: 52px !important;
+        }
+        .guilds_pog62O {
+            left: var(--lh-rail-start) !important;
+            scale: var(--lh-rail-scale);
+            height: calc((50vw - var(--lh-rail-start) - 200px) / var(--lh-rail-scale)) !important;
+            translate: 0 calc((52px - var(--custom-guild-list-width) * var(--lh-rail-scale)) / -2 - var(--gap)) !important;
+            -webkit-app-region: no-drag;
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+        }
+        .subtitleContainer_z_gUBg {
+            height: 52px !important;
+        }
+        .subtitleContainer_z_gUBg h1,
+        .subtitleContainer_z_gUBg h2 {
+            font-size: 17px !important;
+        }
+        .subtitleContainer_z_gUBg .toolbar_ybUK7Z > .clickable_ybUK7Z,
+        .subtitleContainer_z_gUBg .toolbar_ybUK7Z > [class*='iconWrapper_'] {
+            width: 32px !important;
+            height: 32px !important;
+        }
+    }
+    @container body style(--lh-topbar: beacon) {
+        #app-mount {
+            --top-bar-height: 58px;
+            --custom-app-top-bar-height: 58px;
+            --lh-strip: 0px;
+            --lh-rail-start: 96px;
+            --lh-rail-scale: 0.68;
+            --custom-channel-header-height: 84px !important;
+        }
+        .guilds_pog62O {
+            left: var(--lh-rail-start) !important;
+            scale: var(--lh-rail-scale);
+            /* the rail is scaled down, so its unscaled length is longer by the same factor */
+            height: calc((50vw - var(--lh-rail-start) - 220px) / var(--lh-rail-scale)) !important;
+            translate: 0 calc((58px - var(--custom-guild-list-width) * var(--lh-rail-scale)) / -2 - var(--gap)) !important;
+            -webkit-app-region: no-drag;
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+        }
+        /* the beam: a glowing accent line under the server you're in (the strip is rotated, so "left" is below) */
+        .listItem_rwEpIL:has(.selected_JJ-hgR) {
+            position: relative;
+        }
+        .listItem_rwEpIL:has(.selected_JJ-hgR)::after {
+            content: '';
+            position: absolute;
+            left: -2px;
+            top: -14px;
+            bottom: -14px;
+            width: 3px;
+            border-radius: 3px;
+            pointer-events: none;
+            background: linear-gradient(180deg, transparent, var(--lh-2), var(--lh-b), transparent);
+            box-shadow: 0 0 12px 1px color-mix(in srgb, var(--lh-2) 70%, transparent);
+        }
+        .bar_3zSH5d {
+            border-bottom: 1px solid rgb(var(--lh-tint) / 0.08);
+        }
+        .subtitleContainer_z_gUBg {
+            height: 84px !important;
+            background: linear-gradient(180deg, color-mix(in srgb, var(--lh-2) 10%, transparent), transparent 90%) !important;
+        }
+        .subtitleContainer_z_gUBg h1,
+        .subtitleContainer_z_gUBg h2 {
+            font-family: var(--lh-display-font) !important;
+            font-size: 30px !important;
+            letter-spacing: -0.025em;
+            line-height: 1 !important;
+        }
     }
 }
 
