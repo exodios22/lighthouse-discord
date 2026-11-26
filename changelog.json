@@ -8,7 +8,8 @@
       "items": [
         "One bar (new default): your servers sit inside the title bar next to the search, so the top of the app is one row instead of two.",
         "Beacon rail: smaller servers in the title bar with a glowing beam under the one you're in, and a big channel title.",
-        "Switch in Settings → Layout → Top bar, or from the command palette. Classic keeps the old two-row look."
+        "Switch in Settings → Layout → Top bar, or from the command palette. Classic keeps the old two-row look.",
+        "The back and forward arrows in the title bar are replaced by the Lighthouse mark: a glowing accent dot and the name."
       ]
     },
     {

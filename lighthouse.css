@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.12.0
+ * @version 5.12.1
  */
 
 /*
@@ -222,6 +222,36 @@ body,
 }
 .bar_3zSH5d .backForwardButtons_nS9Yqn > *:hover {
     background: rgb(var(--lh-tint) / 0.12) !important;
+}
+
+/* the back / forward arrows make way for the Lighthouse mark: a glowing accent dot and the name */
+.bar_3zSH5d .backForwardButtons_nS9Yqn {
+    display: none !important;
+}
+.bar_3zSH5d .leading_3zSH5d {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 16px;
+}
+.bar_3zSH5d .leading_3zSH5d::before {
+    content: '';
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--lh-2);
+    box-shadow: 0 0 10px 1px color-mix(in srgb, var(--lh-2) 75%, transparent);
+}
+.bar_3zSH5d .leading_3zSH5d::after {
+    content: 'Lighthouse';
+    flex: none;
+    font-family: var(--lh-display-font);
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: var(--text-1);
+    white-space: nowrap;
 }
 
 /* centre title as a pill */
@@ -659,7 +689,7 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
             --top-bar-height: 52px;
             --custom-app-top-bar-height: 52px;
             --lh-strip: 0px;
-            --lh-rail-start: 96px;
+            --lh-rail-start: 136px;
             --lh-rail-scale: 0.75;
             --custom-channel-header-height: 52px !important;
         }
@@ -691,7 +721,7 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
             --top-bar-height: 58px;
             --custom-app-top-bar-height: 58px;
             --lh-strip: 0px;
-            --lh-rail-start: 96px;
+            --lh-rail-start: 136px;
             --lh-rail-scale: 0.68;
             --custom-channel-header-height: 84px !important;
         }
