@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.10.0
+ * @version 3.11.0
  */
 
 const COLOURWAYS = {
@@ -292,6 +292,7 @@ module.exports = class LighthouseSettings {
         document.documentElement.style.removeProperty("--lh-window-radius");
         this.closePalette();
         document.querySelectorAll(".lh-dash-card, .lh-unread-pill, .lh-glow-ring, .lh-titlebar-search, .lh-colour-dot, .lh-swatch-pop, .lh-now-playing, .lh-friends-banner, .lh-cheatsheet, .lh-notes-btn, .lh-notes, .lh-news").forEach(n => n.remove());
+        document.querySelectorAll(".lh-mark").forEach(m => this.unmarkLeading(m));
         clearTimeout(this.updateTimer);
         clearTimeout(this.healthTimer);
         clearTimeout(this.newsTimer);
@@ -809,23 +810,36 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
     }
 
     /* ================= colourway dot (title bar quick switcher) ================= */
+    /* The Lighthouse mark at the left of the title bar (drawn by the theme) opens the colourway picker. It
+       replaces the old colour dot on the right, which is removed. */
     updateColourDot() {
-        const existing = document.querySelector(".lh-colour-dot");
-        if (!this.settings.colourDot) { if (existing) existing.remove(); this.closeSwatches(); return; }
-        // Discord keeps more than one title bar; use the one in the main window that is actually showing
-        const bars = [...document.querySelectorAll(".trailing_3zSH5d")];
-        // already placed and the title bars haven't changed: skip the layout reads below (they force a style/layout pass)
-        if (existing && existing.isConnected && this.dotBars && this.dotBars.length === bars.length && bars.every((b, i) => b === this.dotBars[i])) return;
-        this.dotBars = bars;
-        const visible = b => { const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(b).visibility !== "hidden"; };
-        const host = bars.find(b => b.closest(".base_pog62O") && visible(b)) || bars.find(visible);
-        if (!host) return;
-        if (existing && existing.parentElement === host) return;
-        if (existing) existing.remove();
-        const dot = el("button", {class: "lh-colour-dot", type: "button", "aria-label": "Change colourway", title: "Change colourway",
-            "aria-haspopup": "true", onClick: e => { e.stopPropagation(); this.swatchPop ? this.closeSwatches() : this.openSwatches(dot); }});
-        dot.append(el("span", {class: "lh-colour-dot-fill", "aria-hidden": "true"}));
-        host.prepend(dot);
+        document.querySelectorAll(".lh-colour-dot").forEach(n => n.remove());
+        const on = !!this.settings.colourDot;
+        if (!this.onMarkClick) {
+            this.onMarkClick = e => { e.preventDefault(); e.stopPropagation(); this.swatchPop ? this.closeSwatches() : this.openSwatches(e.currentTarget); };
+            this.onMarkKey = e => { if (e.key === "Enter" || e.key === " ") this.onMarkClick(e); };
+        }
+        for (const mark of document.querySelectorAll(".bar_3zSH5d .leading_3zSH5d")) {
+            if (on && !mark.classList.contains("lh-mark")) {
+                mark.classList.add("lh-mark");
+                mark.setAttribute("role", "button");
+                mark.setAttribute("tabindex", "0");
+                mark.setAttribute("aria-label", "Lighthouse: change colourway");
+                mark.setAttribute("aria-haspopup", "dialog");
+                mark.title = "Change colourway";
+                mark.addEventListener("click", this.onMarkClick);
+                mark.addEventListener("keydown", this.onMarkKey);
+            } else if (!on && mark.classList.contains("lh-mark")) {
+                this.unmarkLeading(mark);
+            }
+        }
+        if (!on) this.closeSwatches();
+    }
+
+    unmarkLeading(mark) {
+        mark.classList.remove("lh-mark");
+        for (const a of ["role", "tabindex", "aria-label", "aria-haspopup", "title"]) mark.removeAttribute(a);
+        if (this.onMarkClick) { mark.removeEventListener("click", this.onMarkClick); mark.removeEventListener("keydown", this.onMarkKey); }
     }
 
     openSwatches(anchor) {
@@ -845,7 +859,8 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
         }
         pop.append(grid);
         pop.style.top = `${Math.round(r.bottom + 8)}px`;
-        pop.style.right = `${Math.max(8, Math.round(window.innerWidth - r.right - 8))}px`;
+        if (r.left < window.innerWidth / 2) pop.style.left = `${Math.max(8, Math.round(r.left))}px`;
+        else pop.style.right = `${Math.max(8, Math.round(window.innerWidth - r.right - 8))}px`;
         document.body.append(pop);
         this.swatchPop = pop;
         this.swatchOutside = e => { if (!pop.contains(e.target) && e.target !== anchor) this.closeSwatches(); };
@@ -1548,7 +1563,7 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
                 type: "category", id: "titlebar", name: "Title Bar", collapsible: true, shown: false,
                 settings: [
                     {type: "switch", id: "titleSearch", name: "Search pill", note: "The middle of the title bar becomes a search pill with the server's name. Click it to open the command palette. Needs the command palette switched on.", value: s.titleSearch},
-                    {type: "switch", id: "colourDot", name: "Colourway dot", note: "A small dot in the title bar that opens a quick colourway picker.", value: s.colourDot},
+                    {type: "switch", id: "colourDot", name: "Colourway picker on the Lighthouse mark", note: "Click the Lighthouse name at the top left to switch colourway.", value: s.colourDot},
                     {type: "switch", id: "splashTheme", name: "Lighthouse start-up screen", note: "Themes the loading window Discord shows while it starts, in your colourway. Needs OpenAsar (the Lighthouse tune-up script installs it). Shows from the next start.", value: s.splashTheme},
                     {type: "switch", id: "roundWindow", name: "Rounded window corners", note: "Rounds the corners of the whole Discord window, always, including maximised and full screen. The corners are see-through with BetterDiscord\'s window transparency on (Settings → BetterDiscord → Window).", value: s.roundWindow},
                     {type: "slider", id: "windowRadius", name: "Window corner size", value: s.windowRadius, min: 4, max: 24, step: 1, units: "px", markers: [4, 8, 12, 16, 20, 24]},

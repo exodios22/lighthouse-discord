@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.13.0
+ * @version 5.14.0
  */
 
 /*
@@ -252,6 +252,28 @@ body,
     letter-spacing: -0.01em;
     color: var(--text-1);
     white-space: nowrap;
+}
+
+/* with the plugin, the mark is a button that opens the colourway picker */
+.bar_3zSH5d .leading_3zSH5d.lh-mark {
+    -webkit-app-region: no-drag;
+    cursor: pointer;
+    align-self: center;
+    height: 34px;
+    margin-left: 6px;
+    padding: 0 12px 0 10px;
+    border-radius: 999px;
+    transition: background 0.15s ease;
+}
+.bar_3zSH5d .leading_3zSH5d.lh-mark:hover {
+    background: rgb(var(--lh-tint) / 0.08);
+}
+.bar_3zSH5d .leading_3zSH5d.lh-mark:hover::before {
+    box-shadow: 0 0 14px 3px color-mix(in srgb, var(--lh-2) 85%, transparent);
+}
+.bar_3zSH5d .leading_3zSH5d.lh-mark:focus-visible {
+    outline: 2px solid var(--lh-2);
+    outline-offset: 1px;
 }
 
 /* centre title as a pill */
