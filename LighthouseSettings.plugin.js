@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.8.0
+ * @version 3.8.1
  */
 
 const COLOURWAYS = {
@@ -266,6 +266,8 @@ module.exports = class LighthouseSettings {
         this.apply();
         document.addEventListener("keydown", this.onKey, true);
         this.tickTimer = setInterval(this.tick, 800);
+        this.onVisible = () => { if (!document.hidden) this.tick(); };
+        document.addEventListener("visibilitychange", this.onVisible);
         this.timeTimer = setInterval(() => this.applyTimeOfDay(), 5 * 60 * 1000);
         this.patchContextMenu();
         this.refreshFeatures();
@@ -280,7 +282,7 @@ module.exports = class LighthouseSettings {
         for (const id of [STYLE_ID, FEATURE_STYLE_ID, OWN_STYLE_ID, TIME_STYLE_ID, SERVER_STYLE_ID, CHANNEL_STYLE_ID]) this.api.DOM.removeStyle(id);
         document.removeEventListener("keydown", this.onKey, true);
         document.removeEventListener("pointermove", this.onPointer, true);
-        clearInterval(this.tickTimer);
+        clearInterval(this.tickTimer); if (this.onVisible) document.removeEventListener("visibilitychange", this.onVisible);
         clearInterval(this.timeTimer);
         safe(() => this.unpatchMenu && this.unpatchMenu());
         document.body.classList.remove("lh-focus");
@@ -334,6 +336,7 @@ module.exports = class LighthouseSettings {
 
     /* runs every 0.8 s: cheap DOM checks only */
     tick() {
+        if (document.hidden) return;   // minimised or hidden: nothing to update on screen (caught up on return)
         safe(() => this.checkGuild());
         safe(() => this.checkChannelAccent());
         safe(() => this.updateDashboard());
@@ -722,7 +725,7 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
         const guildId = guildNode ? guildNode.getAttribute("data-list-item-id").slice(12) : null;
         if (!list || !guildId || !/^\d+$/.test(guildId)) return null;
 
-        const unreadChannels = [...list.querySelectorAll(".wrapper_TNyK-N")].filter(w => /modeUnread/.test(w.className) && !/modeSelected/.test(w.className));
+        const unreadChannels = [...list.querySelectorAll(".wrapper_TNyK-N[class*='modeUnread']:not([class*='modeSelected'])")];
         let mentions = 0;
         list.querySelectorAll(".numberBadge_lMvXrQ").forEach(b => { mentions += parseInt(b.textContent.replace(/\D/g, ""), 10) || 0; });
 
@@ -809,6 +812,9 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
         if (!this.settings.colourDot) { if (existing) existing.remove(); this.closeSwatches(); return; }
         // Discord keeps more than one title bar; use the one in the main window that is actually showing
         const bars = [...document.querySelectorAll(".trailing_3zSH5d")];
+        // already placed and the title bars haven't changed: skip the layout reads below (they force a style/layout pass)
+        if (existing && existing.isConnected && this.dotBars && this.dotBars.length === bars.length && bars.every((b, i) => b === this.dotBars[i])) return;
+        this.dotBars = bars;
         const visible = b => { const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(b).visibility !== "hidden"; };
         const host = bars.find(b => b.closest(".base_pog62O") && visible(b)) || bars.find(visible);
         if (!host) return;
@@ -1271,7 +1277,8 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
         const text = (safe(() => title.querySelector("[class*='text-sm']").textContent) || (title && title.textContent) || "Discord").trim();
         const label = pill.querySelector(".lh-tb-label");
         if (label.textContent !== text) label.textContent = text;
-        pill.setAttribute("aria-label", `${text}. Search or jump to anything (${this.settings.paletteKey === "ctrlk" ? "Ctrl K" : "Ctrl Shift K"})`);
+        const aria = `${text}. Search or jump to anything (${this.settings.paletteKey === "ctrlk" ? "Ctrl K" : "Ctrl Shift K"})`;
+        if (pill.getAttribute("aria-label") !== aria) pill.setAttribute("aria-label", aria);   // no DOM write when unchanged
         const kbd = pill.querySelector(".lh-tb-kbd");
         const keyText = this.settings.paletteKey === "ctrlk" ? "Ctrl K" : "Ctrl ⇧ K";
         if (kbd.textContent !== keyText) kbd.textContent = keyText;
@@ -1450,7 +1457,7 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
     ColourwayPicker() {
         const React = BdApi.React;
         const [picked, setPicked] = React.useState(this.settings.colourway);
-        return React.createElement("div", {className: "lh-colourways"},
+        return React.createElement("div", {className: "lh-colourways", ref: lhMarkRow},
             Object.entries(COLOURWAYS).map(([id, way]) =>
                 React.createElement("button", {
                     key: id,
@@ -1473,8 +1480,8 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
         const React = BdApi.React;
         const h = React.createElement;
         const [list, setList] = React.useState(this.bookmarksData.slice().reverse());
-        if (!list.length) return h("div", {className: "lh-profile-empty"}, "No bookmarks yet. Right-click a message and choose Save to Lighthouse bookmarks.");
-        return h("div", {className: "lh-profiles"}, list.map(b => h("div", {key: b.id, className: "lh-profile-row"},
+        if (!list.length) return h("div", {className: "lh-profile-empty", ref: lhMarkRow}, "No bookmarks yet. Right-click a message and choose Save to Lighthouse bookmarks.");
+        return h("div", {className: "lh-profiles", ref: lhMarkRow}, list.map(b => h("div", {key: b.id, className: "lh-profile-row"},
             h("button", {type: "button", className: "lh-mark-open", onClick: () => this.openBookmark(b)},
                 h("span", {className: "lh-profile-name"}, b.author), h("span", {className: "lh-mark-text"}, b.text || "(attachment)")),
             h("button", {type: "button", className: "lh-btn lh-btn-ghost", "aria-label": `Remove bookmark from ${b.author}`, onClick: () => { this.removeBookmark(b.id); setList(this.bookmarksData.slice().reverse()); }}, "Remove"))));
@@ -1484,7 +1491,7 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
         const React = BdApi.React;
         const h = React.createElement;
         const [code, setCode] = React.useState("");
-        return h("div", {className: "lh-profiles"},
+        return h("div", {className: "lh-profiles", ref: lhMarkRow},
             h("div", {className: "lh-profile-new"},
                 h("button", {type: "button", className: "lh-btn lh-btn-accent", onClick: () => this.copySetupCode()}, "Copy my setup code")),
             h("div", {className: "lh-profile-new"},
@@ -1508,7 +1515,7 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
             refresh();
             BdApi.UI.showToast(`Saved profile “${n}”`, {type: "success"});
         };
-        return h("div", {className: "lh-profiles"},
+        return h("div", {className: "lh-profiles", ref: lhMarkRow},
             h("div", {className: "lh-profile-new"},
                 h("label", {className: "lh-sr", htmlFor: "lh-profile-name"}, "Profile name"),
                 h("input", {id: "lh-profile-name", className: "lh-input", placeholder: "Name this setup, e.g. Work or Chill", value: draft,
@@ -1516,7 +1523,7 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
                 h("button", {type: "button", className: "lh-btn lh-btn-accent", onClick: save, disabled: !draft.trim()}, "Save current setup")
             ),
             names.length === 0
-                ? h("div", {className: "lh-profile-empty"}, "No saved profiles yet.")
+                ? h("div", {className: "lh-profile-empty", ref: lhMarkRow}, "No saved profiles yet.")
                 : names.map(n => h("div", {key: n, className: "lh-profile-row"},
                     h("span", {className: "lh-profile-name"}, n),
                     h("button", {type: "button", className: "lh-btn", onClick: () => this.loadProfile(n)}, "Load"),
@@ -1694,6 +1701,10 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
 };
 
 /* styles for everything this plugin adds; uses the theme's colours with safe fallbacks */
+/* The settings rows that hold the colourway grid, bookmarks and profiles span the full width. Their wrapper is
+   BetterDiscord's, so tag it when the row mounts (a "*:has(> ...)" rule would be tested on every element of Discord). */
+const lhMarkRow = node => { if (node && node.parentElement) node.parentElement.classList.add("lh-fullrow"); };
+
 const FEATURE_CSS = `
 /* rounded window corners */
 html.lh-round, html.lh-round body { background: transparent !important; }
@@ -1895,7 +1906,7 @@ body.lh-focus .lh-unread-pill { display: none; }
 }
 .bd-setting-item:has(.lh-colourways, .lh-profiles, .lh-profile-empty),
 .bd-setting-item:has(.lh-colourways, .lh-profiles, .lh-profile-empty) .bd-setting-header { flex-wrap: wrap; }
-*:has(> .lh-colourways), *:has(> .lh-profiles), *:has(> .lh-profile-empty) { flex: 1 1 100% !important; width: 100% !important; max-width: none !important; margin-left: 0 !important; }
+.lh-fullrow { flex: 1 1 100% !important; width: 100% !important; max-width: none !important; margin-left: 0 !important; }
 .lh-colourways, .lh-profiles, .lh-profile-empty { width: 100%; box-sizing: border-box; }
 .lh-colourways { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-top: 8px; }
 .lh-colourway {

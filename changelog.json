@@ -1,6 +1,18 @@
 {
   "entries": [
     {
+      "id": "2026-11-26-a",
+      "version": "3.8.1",
+      "date": "26 Nov 2026",
+      "title": "Lighter on the browser",
+      "items": [
+        "Looks exactly the same. 40 theme rules now name Discord's real classes instead of searching every class name for a word, so Discord no longer restyles whole sections of the app each time anything changes class (which it does on most hovers).",
+        "Open server folders and speaking call tiles are detected from Discord's own classes, instead of rescanning the server strip and call tiles on every change.",
+        "The settings window's full-width rows no longer make Discord test every element on screen.",
+        "The plugin's background updates pause while Discord is minimised, and no longer rewrite the title bar search pill or measure the title bars twice a second when nothing changed."
+      ]
+    },
+    {
       "id": "2026-11-25-a",
       "version": "3.8.0",
       "date": "25 Nov 2026",
