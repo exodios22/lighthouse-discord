@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.10.0
+ * @version 5.10.1
  */
 
 /*
@@ -649,11 +649,22 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
    ============================================================ */
 @container body style(--lh-server-bar: top) {
     .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ),
-    .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .scroller_5dqHTG,
     .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .tree_5dqHTG,
     .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .itemsContainer_5dqHTG,
     .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .stack_TWWX0S {
         overflow: visible !important;
+    }
+    /* The strip keeps scrolling while a folder is open: instead of switching the scroller's clipping off, its
+       box reaches down under the strip far enough to hold the tray (tray and folder scroll together, and a
+       long tray scrolls with the strip). That extra band lets clicks through to whatever is underneath. */
+    .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .scroller_5dqHTG {
+        --lh-tray-depth: 160px;
+        margin-left: calc(var(--lh-tray-depth) * -1) !important;
+        padding-left: var(--lh-tray-depth) !important;
+        pointer-events: none;
+    }
+    .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .scroller_5dqHTG > * {
+        pointer-events: auto;
     }
     .folderGroup_RTMSuZ {
         position: relative;
