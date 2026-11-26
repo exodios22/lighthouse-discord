@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.14.1
+ * @version 5.15.0
  */
 
 /*
@@ -185,6 +185,8 @@ body,
 @property --lh-calm-roles { syntax: 'off | on'; inherits: false; initial-value: on; }
 @property --lh-winbuttons { syntax: 'minimal | dots'; inherits: false; initial-value: minimal; }
 @property --lh-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+/* set by a colourway (Leonida); inherits so html:root's value reaches body for the style query */
+@property --lh-dusk { syntax: 'off | on'; inherits: true; initial-value: off; }
 
 /* ============================================================
    BACKGROUND — plain SimForge navy
@@ -1223,6 +1225,39 @@ body.lh-focus .page_pog62O {
         animation-duration: 0.001ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.001ms !important;
+    }
+}
+
+/* ============================================================
+   DUSK GRADIENT (colourways that turn it on, e.g. Leonida)
+   A warm sunset glow along the top of the window fading into the
+   indigo, and accents as pink-to-orange gradients. The glow sits on
+   the app background, behind the panels, so text stays clean.
+   ============================================================ */
+@container body style(--lh-dusk: on) {
+    .bg_Fd0FEH {
+        background:
+            radial-gradient(130% 44% at 50% 0%,
+                color-mix(in srgb, var(--lh-b) 34%, transparent),
+                color-mix(in srgb, var(--lh-2) 14%, transparent) 46%,
+                transparent 78%),
+            var(--lh-base) !important;
+    }
+    /* "html" lifts these over the solid-accent rules later in the theme */
+    html .item__o8_Xq,
+    html .numberBadge_lMvXrQ,
+    html .lh-unread-pill,
+    html :is(.tabBar_Jtnpgj,.tabBar_LSviKk,.tabBar_OpoUmC,.tabBar_bkb4-7,.tabBar_lSEuuI,.tabBar_qvPnAz,.tabBar_zrUwGA) [role='tab'][aria-selected='true'] {
+        background: linear-gradient(135deg, var(--lh-2), var(--lh-b)) !important;
+    }
+    :is(.containerDefault_Wx6SnQ,.containerDefault_yOdhm_) :is(.mainContent_EkmWN_,.mainContent_Mel1Ue,.mainContent_OQEDys,.mainContent_fknPy8,.mainContent_yOdhm_) h3,
+    :is(.containerDefault_Wx6SnQ,.containerDefault_yOdhm_) [class*='name_'][class*='overflow'] {
+        color: color-mix(in srgb, var(--lh-b) 55%, #ffffff) !important;
+    }
+    .chat_z_gUBg > .subtitleContainer_z_gUBg {
+        background:
+            linear-gradient(90deg, color-mix(in srgb, var(--lh-b) 14%, transparent), color-mix(in srgb, var(--lh-2) 8%, transparent) 28%, transparent 55%),
+            var(--bg-4) !important;
     }
 }
 

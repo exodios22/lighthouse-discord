@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.11.0
+ * @version 3.12.0
  */
 
 const COLOURWAYS = {
@@ -40,7 +40,7 @@ const COLOURWAYS = {
     },
     leonida: {
         label: "Leonida", light: false, swatch: ["#16122b", "#ff5c9d", "#ffa04a"],
-        vars: {"--lh-1": "#ffc6de", "--lh-2": "#ff5c9d", "--lh-4": "#ff7bb1", "--lh-5": "#e8458a", "--lh-b": "#ffa04a", "--lh-on-accent": "#1c0712", "--lh-base": "#0b0918", "--lh-panel": "#16122b", "--lh-raised": "#201a3b", "--lh-tint": "205 160 255", "--text-1": "#f8f2fb", "--text-2": "#ece3f4", "--text-3": "#d8cbe6", "--text-4": "#a596bb", "--text-5": "#9385ab"}
+        vars: {"--lh-dusk": "on", "--lh-1": "#ffc9a3", "--lh-2": "#ff5c9d", "--lh-4": "#ff7bb1", "--lh-5": "#e8458a", "--lh-b": "#ffa04a", "--lh-on-accent": "#1c0712", "--lh-base": "#0b0918", "--lh-panel": "#16122b", "--lh-raised": "#201a3b", "--lh-tint": "205 160 255", "--text-1": "#f8f2fb", "--text-2": "#ece3f4", "--text-3": "#d8cbe6", "--text-4": "#a596bb", "--text-5": "#9385ab"}
     }
 };
 
