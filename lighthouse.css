@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.10.3
+ * @version 5.10.4
  */
 
 /*
@@ -693,6 +693,11 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
         border: 1px solid rgb(var(--lh-tint) / 0.16) !important;
         border-radius: 16px !important;
         box-shadow: -18px 0 50px -20px rgb(0 0 0 / 0.85);
+    }
+    /* Discord builds the tray as a "stack" too, and the rule above that lets stacks overflow while a folder is
+       open outranks the tray's own overflow; this one outranks it back so a long tray scrolls */
+    .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .folderGroup_RTMSuZ.isExpanded_RTMSuZ > :is([id^='folder-items-'], ul[role='group']) {
+        overflow: hidden auto !important;
     }
     /* the folder's own background stripe is no longer needed */
     .folderGroup_RTMSuZ.isExpanded_RTMSuZ > .folderGroupBackground_RTMSuZ{
