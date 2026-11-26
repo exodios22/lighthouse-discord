@@ -6,7 +6,9 @@
       "date": "26 Nov 2026",
       "title": "Click the Lighthouse mark",
       "items": [
-        "Click the Lighthouse name at the top left to switch colourway. The colour dot on the right of the title bar is gone."
+        "Click the Lighthouse name at the top left to switch colourway. The colour dot on the right of the title bar is gone.",
+        "Beacon rail: one underline per server, the gradient beam, which now also follows the server you hover.",
+        "Open server folders in the top-bar layouts now stretch to the edge of the window, so you see far more of their servers."
       ]
     },
     {

@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.14.0
+ * @version 5.14.1
  */
 
 /*
@@ -720,6 +720,10 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
    ============================================================ */
 @container body style(--lh-server-bar: top) {
     @container body style(--lh-topbar: onebar) {
+        /* the strip ends about halfway across here, so let an open folder's tray run on to the window's edge */
+        .guilds_pog62O .folderGroup_RTMSuZ.isExpanded_RTMSuZ > :is([id^='folder-items-'], ul[role='group']) {
+            bottom: calc((50vw + 200px - 24px) * -1) !important;
+        }
         /* icons are sized, not scaled (scaling resampled them and looked soft); the bar is as tall as the strip */
         #app-mount {
             --guildbar-avatar-size: 44px;
@@ -754,6 +758,10 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
         }
     }
     @container body style(--lh-topbar: beacon) {
+        /* the strip ends about halfway across here, so let an open folder's tray run on to the window's edge */
+        .guilds_pog62O .folderGroup_RTMSuZ.isExpanded_RTMSuZ > :is([id^='folder-items-'], ul[role='group']) {
+            bottom: calc((50vw + 220px - 24px) * -1) !important;
+        }
         #app-mount {
             --guildbar-avatar-size: 40px;
             --custom-guild-list-padding: 8px;
@@ -774,10 +782,17 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
             box-shadow: none !important;
         }
         /* the beam: a glowing accent line under the server you're in (the strip is rotated, so "left" is below) */
-        .listItem_rwEpIL:has(.selected_JJ-hgR) {
+        .listItem_rwEpIL:is(:hover, :has(.selected_JJ-hgR)) {
             position: relative;
         }
-        .listItem_rwEpIL:has(.selected_JJ-hgR)::after {
+        /* one line per server: the beam replaces Discord's own marker on the server you're in or hovering */
+        .listItem_rwEpIL:is(:hover, :has(.selected_JJ-hgR)) .wrapper__o8_Xq {
+            opacity: 0;
+        }
+        .listItem_rwEpIL:hover:not(:has(.selected_JJ-hgR))::after {
+            opacity: 0.55;
+        }
+        .listItem_rwEpIL:is(:hover, :has(.selected_JJ-hgR))::after {
             content: '';
             position: absolute;
             left: -2px;
