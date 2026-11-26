@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.10.2
+ * @version 5.10.3
  */
 
 /*
@@ -506,9 +506,9 @@ body,
    CHAT BUBBLES
    ============================================================ */
 @container body style(--lh-bubbles: on) {
-    .message_SY_P2T [id^='message-content-']:not(.repliedTextContentLeadingIcon_2i8Bfm),
-    .message_SY_P2T [id^='message-content-']:not(.repliedTextContentTrailingIcon_2i8Bfm),
-    .message_SY_P2T [id^='message-content-']:not(.repliedTextContent_2i8Bfm){
+    /* one :not() list: as three separate selectors, every element passed at least one of them, so the
+       quoted text above a reply got a bubble too and was cut off */
+    .message_SY_P2T [id^='message-content-']:not(.repliedTextContentLeadingIcon_2i8Bfm, .repliedTextContentTrailingIcon_2i8Bfm, .repliedTextContent_2i8Bfm) {
         display: inline-block;
         width: fit-content;
         max-width: 100%;
@@ -526,9 +526,9 @@ body,
     .message_SY_P2T [id^='message-content-']:empty {
         display: none;
     }
-    .message_SY_P2T.mentioned_SY_P2T [id^='message-content-']:not(.repliedTextContentLeadingIcon_2i8Bfm),
-    .message_SY_P2T.mentioned_SY_P2T [id^='message-content-']:not(.repliedTextContentTrailingIcon_2i8Bfm),
-    .message_SY_P2T.mentioned_SY_P2T [id^='message-content-']:not(.repliedTextContent_2i8Bfm){
+    /* one :not() list: as three separate selectors, every element passed at least one of them, so the
+       quoted text above a reply got a bubble too and was cut off */
+    .message_SY_P2T.mentioned_SY_P2T [id^='message-content-']:not(.repliedTextContentLeadingIcon_2i8Bfm, .repliedTextContentTrailingIcon_2i8Bfm, .repliedTextContent_2i8Bfm) {
         background: color-mix(in srgb, var(--lh-2) 14%, transparent);
         border-color: color-mix(in srgb, var(--lh-2), transparent 50%);
     }
@@ -789,9 +789,9 @@ body.lh-focus .page_pog62O {
     .message_SY_P2T.groupStart_SY_P2T {
         margin-top: 10px !important;
     }
-    .message_SY_P2T [id^='message-content-']:not(.repliedTextContentLeadingIcon_2i8Bfm),
-    .message_SY_P2T [id^='message-content-']:not(.repliedTextContentTrailingIcon_2i8Bfm),
-    .message_SY_P2T [id^='message-content-']:not(.repliedTextContent_2i8Bfm){
+    /* one :not() list: as three separate selectors, every element passed at least one of them, so the
+       quoted text above a reply got a bubble too and was cut off */
+    .message_SY_P2T [id^='message-content-']:not(.repliedTextContentLeadingIcon_2i8Bfm, .repliedTextContentTrailingIcon_2i8Bfm, .repliedTextContent_2i8Bfm) {
         padding: 5px 12px !important;
         margin-top: 2px !important;
         line-height: 1.42 !important;
