@@ -2,7 +2,7 @@
  * @name LighthouseSettings
  * @author Lighthouse
  * @description Settings and features for the Lighthouse theme: colourways (incl. Daylight light mode), command palette, focus mode, server overview card, unread pill, auto-collapsing sidebars, per-server / per-channel / time-of-day accents, hover glow, settings profiles and accessibility mode. Needs the Lighthouse theme enabled.
- * @version 3.8.1
+ * @version 3.9.0
  */
 
 const COLOURWAYS = {
@@ -869,42 +869,10 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
         return null;
     }
 
+    /* The title-bar now-playing pill is gone: the Spotify Controls widget above your account panel (styled by the
+       theme) does this job. This only clears away a pill left over from an older version. */
     updateNowPlaying() {
-        const existing = document.querySelector(".lh-now-playing");
-        let track = this.settings.nowPlaying ? this.currentTrack() : null;
-        const ended = track && track.end && Date.now() > track.end + 5000;
-        if (track && !ended) {
-            // Discord keeps reporting a song for a few seconds after pausing; only treat it as playing again after that
-            if (!this.paused || Date.now() - (this.pausedAt || 0) > 8000) this.paused = false;
-            this.lastTrack = track; this.lastTrackAt = Date.now();
-        }
-        // keep a paused song on screen for a while so it can be resumed from the pill
-        const showPaused = this.settings.spotifyControls && this.paused && this.lastTrack && Date.now() - this.lastTrackAt < 10 * 60 * 1000;
-        if ((!track || ended) && !showPaused) { if (existing) existing.remove(); return; }
-        if (!track || ended) track = this.lastTrack;
-        const host = document.querySelector(".title_3zSH5d");
-        if (!host) return;
-        let pill = existing;
-        if (!pill || pill.parentElement !== host) {
-            if (pill) pill.remove();
-            pill = el("div", {class: "lh-now-playing", role: "group", "aria-label": "Now playing"},
-                el("span", {class: "lh-eq", "aria-hidden": "true"}, el("i"), el("i"), el("i")),
-                el("span", {class: "lh-np-text", role: "status"}));
-            if (this.settings.spotifyControls) {
-                const btn = (label, icon, action) => { const b = el("button", {class: "lh-np-btn", type: "button", "aria-label": label, title: label, onClick: e => { e.stopPropagation(); this.spotify(action); }}); b.append(svgIcon(icon)); return b; };
-                pill.append(el("span", {class: "lh-np-controls"}, btn("Previous", ICONS.prev, "previous"), btn("Pause", ICONS.pause, "pause"), btn("Next", ICONS.next, "next")));
-            }
-            host.append(pill);
-        }
-        const text = track.artist ? `${track.title} — ${track.artist}` : track.title;
-        const pp = pill.querySelector(".lh-np-controls .lh-np-btn:nth-child(2)");
-        if (pp) {
-            const want = this.paused ? "Play" : "Pause";
-            if (pp.getAttribute("aria-label") !== want) { pp.setAttribute("aria-label", want); pp.title = want; pp.textContent = ""; pp.append(svgIcon(this.paused ? ICONS.play : ICONS.pause)); }
-        }
-        pill.classList.toggle("lh-np-paused", !!this.paused);
-        const span = pill.querySelector(".lh-np-text");
-        if (span.textContent !== text) { span.textContent = text; pill.title = `Now playing: ${text}`; pill.setAttribute("aria-label", `Now playing: ${text}`); }
+        document.querySelectorAll(".lh-now-playing").forEach(n => n.remove());
     }
 
     /* ================= friend requests banner on Home ================= */
@@ -1578,10 +1546,8 @@ button:hover, [role='button']:hover, #skip:hover, #quit:hover, a:hover { backgro
                 settings: [
                     {type: "switch", id: "titleSearch", name: "Search pill", note: "The middle of the title bar becomes a search pill with the server's name. Click it to open the command palette. Needs the command palette switched on.", value: s.titleSearch},
                     {type: "switch", id: "colourDot", name: "Colourway dot", note: "A small dot in the title bar that opens a quick colourway picker.", value: s.colourDot},
-                    {type: "switch", id: "nowPlaying", name: "Now playing", note: "Shows your current Spotify song as a small pill in the title bar while it plays.", value: s.nowPlaying},
-                    {type: "switch", id: "spotifyControls", name: "Spotify buttons", note: "Previous, play/pause and next on the now-playing pill. Spotify only allows this with Premium.", value: s.spotifyControls},
                     {type: "switch", id: "splashTheme", name: "Lighthouse start-up screen", note: "Themes the loading window Discord shows while it starts, in your colourway. Needs OpenAsar (the Lighthouse tune-up script installs it). Shows from the next start.", value: s.splashTheme},
-                    {type: "switch", id: "roundWindow", name: "Rounded window corners", note: "Rounds the corners of the whole Discord window. For see-through corners, also turn on BetterDiscord's window transparency setting (Settings → BetterDiscord → Settings → Window) and restart Discord. Corners stay square while the window is maximised.", value: s.roundWindow},
+                    {type: "switch", id: "roundWindow", name: "Rounded window corners", note: "Rounds the corners of the whole Discord window, always, including maximised and full screen. The corners are see-through with BetterDiscord\'s window transparency on (Settings → BetterDiscord → Window).", value: s.roundWindow},
                     {type: "slider", id: "windowRadius", name: "Window corner size", value: s.windowRadius, min: 4, max: 24, step: 1, units: "px", markers: [4, 8, 12, 16, 20, 24]},
                     {type: "dropdown", id: "winButtons", name: "Window buttons", value: s.winButtons, options: [
                         {label: "Minimal (Windows-style icons, coral close)", value: "minimal"},
@@ -1709,8 +1675,6 @@ const FEATURE_CSS = `
 /* rounded window corners */
 html.lh-round, html.lh-round body { background: transparent !important; }
 html.lh-round #app-mount { border-radius: var(--lh-window-radius, 12px); clip-path: inset(0 round var(--lh-window-radius, 12px)); overflow: hidden; background: var(--lh-base, var(--bg-4, #0a111d)) !important; }
-@media (display-mode: fullscreen) { html.lh-round #app-mount { border-radius: 0; clip-path: none; } }
-html.lh-round.lh-maximised #app-mount { border-radius: 0; clip-path: none; }
 
 .lh-ico { display: inline-flex; flex: none; }
 .lh-kbd {

@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.10.4
+ * @version 5.11.0
  */
 
 /*
@@ -1627,6 +1627,96 @@ body.lh-focus .page_pog62O {
     .members_86es0b [class*='username_'] {
         filter: saturate(0.7) brightness(1.04);
     }
+}
+
+/* ============================================================
+   SPOTIFY CONTROLS (the plugin's player above your account panel)
+   A small card in the Lighthouse style: accent instead of Spotify
+   green, a glowing progress bar, a rounded cover and display type.
+   ============================================================ */
+.panels_pog62O .container_791eb8 {
+    --SC-spotify-green: var(--lh-2);
+    margin: 8px 8px 2px;
+    padding: 10px 12px !important;
+    min-height: 0;
+    border: 1px solid rgb(var(--lh-tint) / 0.1) !important;
+    border-radius: var(--lh-radius-md) !important;
+    background:
+        radial-gradient(140% 120% at 0% 0%, color-mix(in srgb, var(--lh-2) 16%, transparent), transparent 62%),
+        rgb(var(--lh-tint) / 0.045) !important;
+    box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.04) inset;
+}
+.panels_pog62O .container_791eb8 .inner_791eb8 {
+    gap: 2px;
+}
+.panels_pog62O .container_791eb8 .coverWrapper_791eb8 {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+    margin-right: 10px;
+    border-radius: 10px;
+    box-shadow: 0 6px 16px -6px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(var(--lh-tint) / 0.12);
+}
+.panels_pog62O .container_791eb8.maximized_791eb8 .coverWrapper_791eb8 {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    margin: 0 0 8px 0;
+    border-radius: var(--lh-radius-sm);
+}
+.panels_pog62O .container_791eb8 .song_791eb8 {
+    font-family: var(--lh-display-font);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+    color: var(--text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.panels_pog62O .container_791eb8 .interpret_791eb8 {
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--text-4);
+}
+.panels_pog62O .container_791eb8 .timeline_791eb8 {
+    margin: 8px 0 0;
+}
+.panels_pog62O .container_791eb8 .bar_791eb8 {
+    --bar-size: 4px;
+    border-radius: 999px;
+    background-color: rgb(var(--lh-tint) / 0.12);
+}
+.panels_pog62O .container_791eb8 .barFill_791eb8,
+.panels_pog62O .container_791eb8 .timeline_791eb8:hover .barFill_791eb8 {
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--lh-2), var(--lh-b));
+    box-shadow: 0 0 10px -1px color-mix(in srgb, var(--lh-2) 70%, transparent);
+}
+.panels_pog62O .container_791eb8 .grabber_791eb8 {
+    background: var(--lh-b);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--lh-2) 30%, transparent);
+}
+.panels_pog62O .container_791eb8 .barText_791eb8 {
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-4);
+}
+.panels_pog62O .container_791eb8.paused_791eb8 .barFill_791eb8 {
+    background: rgb(var(--lh-tint) / 0.35);
+    box-shadow: none;
+}
+.panels_pog62O .container_791eb8 button {
+    border-radius: 10px !important;
+}
+.panels_pog62O .container_791eb8 button:hover {
+    background: rgb(var(--lh-tint) / 0.1) !important;
+}
+.panels_pog62O .container_791eb8 .active_791eb8 {
+    color: var(--lh-2) !important;
 }
 
 /* ============================================================

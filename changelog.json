@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "2026-11-26-b",
+      "version": "3.9.0",
+      "date": "26 Nov 2026",
+      "title": "Spotify card and round corners",
+      "items": [
+        "The Spotify Controls player above your account panel now matches Lighthouse: a rounded card with an accent progress bar, a bigger rounded cover and the display font.",
+        "The now-playing pill in the title bar is gone; the player above your account panel does that job.",
+        "The window keeps its rounded corners when maximised and full screen too."
+      ]
+    },
+    {
       "id": "2026-11-26-a",
       "version": "3.8.1",
       "date": "26 Nov 2026",
