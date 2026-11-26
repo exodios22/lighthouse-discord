@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.10.1
+ * @version 5.10.2
  */
 
 /*
@@ -654,21 +654,19 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
     .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .stack_TWWX0S {
         overflow: visible !important;
     }
-    /* The strip keeps scrolling while a folder is open: instead of switching the scroller's clipping off, its
-       box reaches down under the strip far enough to hold the tray (tray and folder scroll together, and a
-       long tray scrolls with the strip). That extra band lets clicks through to whatever is underneath. */
-    .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .scroller_5dqHTG {
-        --lh-tray-depth: 160px;
-        margin-left: calc(var(--lh-tray-depth) * -1) !important;
-        padding-left: var(--lh-tray-depth) !important;
-        pointer-events: none;
-    }
-    .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .scroller_5dqHTG > * {
-        pointer-events: auto;
-    }
     .folderGroup_RTMSuZ {
         position: relative;
         overflow: visible !important;
+    }
+    /* An open folder's tray lines up with its folder (anchor) but is sized against the whole strip, so a big
+       folder stops at the end of the strip and scrolls (mouse wheel) instead of running off the screen. */
+    .folderGroup_RTMSuZ.isExpanded_RTMSuZ {
+        position: static;
+        anchor-name: --lh-folder;
+        anchor-scope: --lh-folder;
+    }
+    .guilds_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ) .scroller_5dqHTG {
+        position: static !important;
     }
     /* lift the strip above the panels while a tray is open */
     .sidebar_pog62O:has(.folderGroup_RTMSuZ.isExpanded_RTMSuZ),
@@ -679,11 +677,16 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
     .folderGroup_RTMSuZ.isExpanded_RTMSuZ > [id^='folder-items-'],
     .folderGroup_RTMSuZ.isExpanded_RTMSuZ > ul[role='group'] {
         position: absolute !important;
-        top: -6px !important;
-        right: calc(100% + 12px) !important;
+        top: calc(anchor(--lh-folder top, 0px) - 6px) !important;
+        bottom: 8px !important;
+        right: calc(anchor(--lh-folder left, 0px) + 12px) !important;
         left: auto !important;
         z-index: 200;
-        height: auto !important;
+        height: auto !important;      /* reaches to the end of the strip at most... */
+        max-height: max-content;      /* ...but no longer than its servers */
+        overflow: hidden auto !important;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
         padding: 10px 8px !important;
         gap: 6px;
         background: var(--lh-raised) !important;

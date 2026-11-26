@@ -6,7 +6,7 @@
       "date": "26 Nov 2026",
       "title": "Lighter on the browser",
       "items": [
-        "Fixed: with a server folder open, the server strip couldn't be scrolled (and big folders ran off the edge of the screen). The strip now scrolls with a folder open, the folder's tray moves with it, and long trays scroll with the strip.",
+        "Fixed: a big server folder's tray ran off the edge of the screen and couldn't be scrolled. It now stops at the end of the server strip and scrolls with the mouse wheel; smaller folders look exactly as before.",
         "Looks exactly the same. 40 theme rules now name Discord's real classes instead of searching every class name for a word, so Discord no longer restyles whole sections of the app each time anything changes class (which it does on most hovers).",
         "Open server folders and speaking call tiles are detected from Discord's own classes, instead of rescanning the server strip and call tiles on every change.",
         "The settings window's full-width rows no longer make Discord test every element on screen.",
