@@ -2,7 +2,7 @@
  * @name Lighthouse
  * @author Lighthouse
  * @description SimForge-style Discord: deep navy, warm amber accents, floating cards, dashboard headers, chat bubbles, square avatars, server strip on top. Pair with LighthouseSettings.plugin.js for settings, colourways, focus mode, auto-collapsing sidebars and per-server accent colours.
- * @version 5.12.1
+ * @version 5.13.0
  */
 
 /*
@@ -369,6 +369,19 @@ body,
     border-radius: var(--lh-radius-lg) !important;
 }
 
+/* channel header: the same card as the other panels, with a soft accent glow from the left (like the selected
+   channel) instead of whatever tint Discord or the base theme gives it */
+.chat_z_gUBg > .subtitleContainer_z_gUBg {
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--lh-2) 12%, transparent), transparent 46%),
+        var(--bg-4) !important;
+    border: 1px solid rgb(var(--lh-tint) / 0.1) !important;
+}
+.chat_z_gUBg > .subtitleContainer_z_gUBg .title_z_gUBg,
+.chat_z_gUBg > .subtitleContainer_z_gUBg .children_z_gUBg::after {
+    background: none !important;
+}
+
 /* channel category headings as small caps, like SimForge's section labels */
 :is(.containerDefault_Wx6SnQ,.containerDefault_yOdhm_) :is(.mainContent_EkmWN_,.mainContent_Mel1Ue,.mainContent_OQEDys,.mainContent_fknPy8,.mainContent_yOdhm_) h3,
 :is(.containerDefault_Wx6SnQ,.containerDefault_yOdhm_) [class*='name_'][class*='overflow'] {
@@ -685,26 +698,28 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
    ============================================================ */
 @container body style(--lh-server-bar: top) {
     @container body style(--lh-topbar: onebar) {
+        /* icons are sized, not scaled (scaling resampled them and looked soft); the bar is as tall as the strip */
         #app-mount {
-            --top-bar-height: 52px;
-            --custom-app-top-bar-height: 52px;
+            --guildbar-avatar-size: 44px;
+            --custom-guild-list-padding: 8px;
+            --custom-guild-list-width: calc(var(--guildbar-avatar-size) + var(--custom-guild-list-padding) * 2 + var(--border-thickness, 1px) * 2);
+            --top-bar-height: var(--custom-guild-list-width);
+            --custom-app-top-bar-height: var(--custom-guild-list-width);
             --lh-strip: 0px;
             --lh-rail-start: 136px;
-            --lh-rail-scale: 0.75;
-            --custom-channel-header-height: 52px !important;
+            --custom-channel-header-height: 56px !important;
         }
         .guilds_pog62O {
+            --guildbar-avatar-size: 44px;
             left: var(--lh-rail-start) !important;
-            scale: var(--lh-rail-scale);
-            height: calc((50vw - var(--lh-rail-start) - 200px) / var(--lh-rail-scale)) !important;
-            translate: 0 calc((52px - var(--custom-guild-list-width) * var(--lh-rail-scale)) / -2 - var(--gap)) !important;
+            height: calc(50vw - var(--lh-rail-start) - 200px) !important;
             -webkit-app-region: no-drag;
             background: transparent !important;
             border-color: transparent !important;
             box-shadow: none !important;
         }
         .subtitleContainer_z_gUBg {
-            height: 52px !important;
+            height: 56px !important;
         }
         .subtitleContainer_z_gUBg h1,
         .subtitleContainer_z_gUBg h2 {
@@ -718,19 +733,19 @@ img[class*='avatar']:not([class*='Decoration']):not([class*='decoration']),
     }
     @container body style(--lh-topbar: beacon) {
         #app-mount {
-            --top-bar-height: 58px;
-            --custom-app-top-bar-height: 58px;
+            --guildbar-avatar-size: 40px;
+            --custom-guild-list-padding: 8px;
+            --custom-guild-list-width: calc(var(--guildbar-avatar-size) + var(--custom-guild-list-padding) * 2 + var(--border-thickness, 1px) * 2);
+            --top-bar-height: var(--custom-guild-list-width);
+            --custom-app-top-bar-height: var(--custom-guild-list-width);
             --lh-strip: 0px;
             --lh-rail-start: 136px;
-            --lh-rail-scale: 0.68;
             --custom-channel-header-height: 84px !important;
         }
         .guilds_pog62O {
+            --guildbar-avatar-size: 40px;
             left: var(--lh-rail-start) !important;
-            scale: var(--lh-rail-scale);
-            /* the rail is scaled down, so its unscaled length is longer by the same factor */
-            height: calc((50vw - var(--lh-rail-start) - 220px) / var(--lh-rail-scale)) !important;
-            translate: 0 calc((58px - var(--custom-guild-list-width) * var(--lh-rail-scale)) / -2 - var(--gap)) !important;
+            height: calc(50vw - var(--lh-rail-start) - 220px) !important;
             -webkit-app-region: no-drag;
             background: transparent !important;
             border-color: transparent !important;
